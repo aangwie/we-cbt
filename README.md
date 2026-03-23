@@ -1,66 +1,219 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# WeTest CBT (Computer Based Test)
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+Sistem ujian berbasis komputer (CBT) yang dibangun dengan **Laravel 12**. Mendukung tiga peran pengguna: **Admin**, **Guru**, dan **Siswa** dengan fitur ujian real-time, monitoring live, dan manajemen soal lengkap.
 
-## About Laravel
+## ✨ Fitur Utama
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+### 🔐 Multi-Role Authentication
+- **Admin** — Kelola guru, siswa, ujian, soal, dan hasil ujian
+- **Guru** — Kelola soal untuk ujian yang diampu
+- **Siswa** — Mengerjakan ujian, melihat hasil, dan melanjutkan sesi
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+### 📝 Manajemen Ujian
+- CRUD ujian dengan token akses otomatis
+- Pengelompokan ujian per kelas (VII, VIII, IX)
+- Durasi ujian yang dapat dikonfigurasi
+- Regenerate token ujian
+- Soal mendukung teks + gambar (pilihan A–E)
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+### 🎯 Fitur Ujian Siswa
+- Tampilan soal satu per halaman dengan navigasi grid
+- Acak urutan soal (setiap siswa mendapatkan urutan berbeda)
+- Auto-save jawaban secara real-time (AJAX)
+- Tombol **Ragu-ragu** dengan penanda warna kuning
+- Tombol **Kumpulkan** disabled hingga semua soal dijawab
+- Timer countdown dengan indikator visual
+- Auto-submit saat waktu habis
+- **Resume sesi** — jika siswa logout/keluar, login kembali dan masukkan token untuk melanjutkan
 
-## Learning Laravel
+### 📊 Monitoring Admin
+- Live monitoring siswa yang sedang mengerjakan ujian
+- Progress bar per siswa (jumlah dijawab, sisa, %)
+- Status: 🔴 Sedang Mengerjakan / 🟢 Selesai
+- CRUD hasil ujian
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+### ⚙️ Pengaturan
+- Ubah nama website dan logo
+- Favicon dinamis dari logo yang diupload
+- GitHub Token management
+- Clear Cache & Clear Config
+- Log viewer
 
-You may also try the [Laravel Bootcamp](https://bootcamp.laravel.com), where you will be guided through building a modern Laravel application from scratch.
+### 🖼️ Optimasi Gambar
+- Semua gambar soal otomatis dikonversi ke **WebP** (kualitas 90%)
+- Maksimal upload 500KB
+- Logo tetap format asli (tidak dikonversi)
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+---
 
-## Laravel Sponsors
+## 📋 Persyaratan Sistem
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+- **PHP** >= 8.2 (dengan ekstensi GD)
+- **Composer** >= 2.x
+- **Node.js** >= 18.x & **NPM**
+- **MySQL** >= 5.7 / MariaDB
+- **XAMPP** atau web server lainnya
 
-### Premium Partners
+---
 
-- **[Vehikl](https://vehikl.com/)**
-- **[Tighten Co.](https://tighten.co)**
-- **[WebReinvent](https://webreinvent.com/)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel/)**
-- **[Cyber-Duck](https://cyber-duck.co.uk)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Jump24](https://jump24.co.uk)**
-- **[Redberry](https://redberry.international/laravel/)**
-- **[Active Logic](https://activelogic.com)**
-- **[byte5](https://byte5.de)**
-- **[OP.GG](https://op.gg)**
+## 🚀 Langkah Instalasi
 
-## Contributing
+### 1. Clone Repository
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+```bash
+git clone https://github.com/aangwie/we-cbt.git
+cd we-cbt
+```
 
-## Code of Conduct
+### 2. Install Dependencies
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+```bash
+composer install
+npm install
+```
 
-## Security Vulnerabilities
+### 3. Konfigurasi Environment
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+```bash
+cp .env.example .env
+php artisan key:generate
+```
 
-## License
+Edit file `.env` dan sesuaikan konfigurasi database:
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+```env
+APP_NAME="WeTest CBT"
+APP_URL=http://localhost:8000
+
+DB_CONNECTION=mysql
+DB_HOST=127.0.0.1
+DB_PORT=3306
+DB_DATABASE=wetest
+DB_USERNAME=root
+DB_PASSWORD=
+```
+
+### 4. Buat Database
+
+Buat database baru di MySQL dengan nama `wetest` (atau sesuaikan dengan `.env`):
+
+```sql
+CREATE DATABASE wetest;
+```
+
+### 5. Jalankan Migrasi & Seeder
+
+```bash
+php artisan migrate
+php artisan db:seed
+```
+
+### 6. Buat Symbolic Link untuk Storage
+
+```bash
+php artisan storage:link
+```
+
+### 7. Build Assets Frontend
+
+```bash
+npm run build
+```
+
+### 8. Jalankan Server
+
+```bash
+php artisan serve
+```
+
+Aplikasi dapat diakses di: **http://localhost:8000**
+
+---
+
+## 🔑 Cara Akses
+
+### Admin
+| Field    | Value              |
+|----------|--------------------|
+| URL      | `/login`           |
+| Email    | `admin@wetest.com` |
+| Password | `password`         |
+
+### Guru
+| Field    | Value             |
+|----------|-------------------|
+| URL      | `/login`          |
+| Email    | *(dibuat oleh admin)* |
+| Password | *(dibuat oleh admin)* |
+
+### Siswa
+| Field    | Value                     |
+|----------|---------------------------|
+| URL      | `/login`                  |
+| NISN     | *(didaftarkan oleh admin)*|
+| Password | *(didaftarkan oleh admin)*|
+
+> **Catatan:** Akun default di atas tersedia jika menggunakan `DatabaseSeeder`. Sesuaikan dengan seeder yang digunakan.
+
+---
+
+## 📁 Struktur Proyek
+
+```
+we-cbt/
+├── app/
+│   ├── Helpers/          # ImageHelper (konversi WebP)
+│   ├── Http/Controllers/ # AdminController, GuruController, SiswaController, dll
+│   ├── Models/           # Ujian, Soal, Siswa, HasilUjian, SesiUjian, dll
+│   └── Imports/          # SiswaImport (import Excel)
+├── database/
+│   ├── migrations/       # Skema database
+│   └── seeders/          # Data awal
+├── resources/views/
+│   ├── admin/            # Halaman admin
+│   ├── guru/             # Halaman guru
+│   ├── siswa/            # Halaman siswa
+│   └── layouts/          # Template layout
+└── routes/web.php        # Definisi routing
+```
+
+---
+
+## 🛠️ Perintah Berguna
+
+```bash
+# Development mode (hot reload)
+npm run dev
+
+# Build untuk production
+npm run build
+
+# Clear semua cache
+php artisan cache:clear
+php artisan view:clear
+php artisan route:clear
+php artisan config:clear
+
+# Fresh migrate (reset database)
+php artisan migrate:fresh --seed
+```
+
+---
+
+## 📝 Tech Stack
+
+| Teknologi    | Versi   |
+|-------------|---------|
+| Laravel     | 12.x    |
+| PHP         | 8.2+    |
+| Tailwind CSS| 4.x     |
+| Alpine.js   | 3.x     |
+| Vite        | 6.x     |
+| SweetAlert2 | Latest  |
+| MySQL       | 5.7+    |
+
+---
+
+## 📄 Lisensi
+
+Proyek ini dilisensikan di bawah [MIT License](https://opensource.org/licenses/MIT).
