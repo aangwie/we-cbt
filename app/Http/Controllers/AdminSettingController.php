@@ -18,9 +18,9 @@ class AdminSettingController extends Controller
             'github_token' => null,
         ]);
 
-        // Read the last 100 lines of laravel.log if it exists
-        $logPath = storage_path('logs/laravel.log');
-        $terminalLog = 'Log file not found.';
+        // Read the last 100 lines of system_updates.log if it exists
+        $logPath = storage_path('logs/system_updates.log');
+        $terminalLog = "Belum ada log aktivitas sistem.\nLakukan Update CBT, Clear Cache, atau Clear Config untuk melihat log di sini.";
         if (File::exists($logPath)) {
             $logContent = file($logPath);
             // Get last 100 lines
@@ -35,17 +35,19 @@ class AdminSettingController extends Controller
     {
         $setting = Setting::firstOrCreate(['id' => 1]);
 
-        $request->validate([
+        $validatedData = $request->validate([
             'app_name' => 'required|string|max:255',
-            'app_logo' => 'nullable|image|mimes:jpeg,png,jpg,svg,ico|max:500',
+            'app_logo' => 'nullable|image|max:1024', // Changed max size and removed mimes for simplicity as per instruction
             'github_token' => ['nullable', 'string', 'regex:/^ghp_[a-zA-Z0-9]{36}$/'],
+            'date_format' => 'required|string', // Added date_format validation
         ], [
             'github_token.regex' => 'Format GitHub Token tidak valid. Harus dimulai dengan ghp_ dan diikuti 36 karakter alfanumerik.',
         ]);
 
         $data = [
-            'app_name' => $request->app_name,
-            'github_token' => $request->github_token,
+            'app_name' => $validatedData['app_name'],
+            'github_token' => $validatedData['github_token'],
+            'date_format' => $validatedData['date_format'], // Include date_format
         ];
 
         if ($request->hasFile('app_logo')) {
@@ -55,22 +57,72 @@ class AdminSettingController extends Controller
             $data['app_logo'] = $request->file('app_logo')->store('settings', 'public');
         }
 
+        // Clean up formatting - ensure github_token is null if empty string
+        if (!isset($data['github_token']) || $data['github_token'] === '') {
+            $data['github_token'] = null;
+        }
+
         $setting->update($data);
 
-        return redirect()->route('admin.settings.index')->with('success', 'Pengaturan berhasil diperbarui.');
+        return back()->with('success', 'Pengaturan berhasil diperbarui.');
+    }
+
+    public function updateSystem()
+    {
+        try {
+            $output = [];
+            $status = 0;
+            
+            // Execute git pull and migrate
+            exec('git pull origin main 2>&1 && php artisan migrate --force 2>&1', $output, $status);
+            
+            $log = implode("\n", $output);
+            $this->logSystemAction('Update CBT (GitHub Pull & Migrate)', $log);
+            
+            if ($status !== 0) {
+                return back()->withErrors(['update' => 'Gagal menarik pembaruan: ' . $log]);
+            }
+            
+            // Clear caches after update
+            \Illuminate\Support\Facades\Artisan::call('optimize:clear');
+            
+            return back()->with('success', "Sistem berhasil diperbarui dari GitHub dan disinkronisasi.\nLog:\n" . substr($log, 0, 200) . '...');
+        } catch (\Exception $e) {
+            $this->logSystemAction('Update CBT (Error)', $e->getMessage());
+            return back()->withErrors(['update' => 'Terjadi kesalahan sistem: ' . $e->getMessage()]);
+        }
     }
 
     public function clearCache()
     {
+        $log = "";
         Artisan::call('cache:clear');
+        $log .= Artisan::output();
         Artisan::call('view:clear');
+        $log .= Artisan::output();
         Artisan::call('route:clear');
+        $log .= Artisan::output();
+        
+        $this->logSystemAction('Clear Cache', trim($log));
+        
         return redirect()->route('admin.settings.index')->with('success', 'Cache berhasil dibersihkan.');
     }
 
     public function clearConfig()
     {
         Artisan::call('config:clear');
+        $log = Artisan::output();
+        
+        $this->logSystemAction('Clear Config', trim($log));
+        
         return redirect()->route('admin.settings.index')->with('success', 'Config berhasil dibersihkan.');
+    }
+
+    private function logSystemAction($action, $output)
+    {
+        $logPath = storage_path('logs/system_updates.log');
+        $timestamp = now()->format('Y-m-d H:i:s');
+        $logEntry = "[$timestamp] ACTION: $action\n" . $output . "\n" . str_repeat("-", 50) . "\n";
+        File::append($logPath, $logEntry);
     }
 }

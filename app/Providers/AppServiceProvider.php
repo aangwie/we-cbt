@@ -19,6 +19,12 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        \Carbon\Carbon::setLocale('id');
+
+        \Illuminate\Support\Facades\Blade::directive('formatDate', function ($expression) {
+            return "<?php echo \App\Helpers\DateHelper::format($expression); ?>";
+        });
+
         try {
             if (\Illuminate\Support\Facades\Schema::hasTable('settings')) {
                 $appSetting = \App\Models\Setting::first();

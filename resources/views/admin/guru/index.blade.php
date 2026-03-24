@@ -20,6 +20,7 @@
                         <th class="text-left px-6 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">#</th>
                         <th class="text-left px-6 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">Nama</th>
                         <th class="text-left px-6 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">Email</th>
+                        <th class="text-left px-6 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">Mapel Diampu</th>
                         <th class="text-left px-6 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">Aksi</th>
                     </tr>
                 </thead>
@@ -29,6 +30,15 @@
                         <td class="px-6 py-3.5 text-slate-500">{{ $i + 1 }}</td>
                         <td class="px-6 py-3.5 font-medium text-slate-800">{{ $guru->name }}</td>
                         <td class="px-6 py-3.5 text-slate-600">{{ $guru->email }}</td>
+                        <td class="px-6 py-3.5">
+                            <div class="flex flex-wrap gap-1.5">
+                                @forelse($guru->mapels as $mapel)
+                                    <span class="inline-block px-2 py-1 bg-indigo-50 text-indigo-700 rounded text-[10px] font-bold tracking-wide uppercase">{{ $mapel->kode_mapel }}</span>
+                                @empty
+                                    <span class="text-xs text-slate-400 italic">Belum diset</span>
+                                @endforelse
+                            </div>
+                        </td>
                         <td class="px-6 py-3.5">
                             <div class="flex items-center gap-2">
                                 <a href="{{ route('admin.guru.edit', $guru) }}" class="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition" title="Edit">

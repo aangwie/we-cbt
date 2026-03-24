@@ -145,7 +145,7 @@
                         <td class="px-6 py-3.5">
                             <span class="inline-flex px-2.5 py-1 rounded-full text-xs font-bold {{ $hasil->nilai >= 70 ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700' }}">{{ $hasil->nilai }}</span>
                         </td>
-                        <td class="px-6 py-3.5 text-slate-600 text-xs">{{ $hasil->tgl_selesai->format('d/m/Y H:i') }}</td>
+                        <td class="px-6 py-3.5 text-slate-600 text-xs">@formatDate($hasil->tgl_selesai)</td>
                         <td class="px-6 py-3.5">
                             <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-100 text-emerald-600">
                                 <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>

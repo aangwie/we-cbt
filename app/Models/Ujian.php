@@ -8,6 +8,7 @@ class Ujian extends Model
 {
     protected $fillable = [
         'judul',
+        'mapel_id',
         'guru_id',
         'token',
         'is_active',
@@ -30,6 +31,11 @@ class Ujian extends Model
     public function soals()
     {
         return $this->hasMany(Soal::class);
+    }
+
+    public function mapel()
+    {
+        return $this->belongsTo(Mapel::class, 'mapel_id');
     }
 
     public function hasilUjians()

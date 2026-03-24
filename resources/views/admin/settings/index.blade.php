@@ -35,6 +35,17 @@
                     </div>
 
                     <div class="pt-4 border-t border-slate-100">
+                        <label class="block text-sm font-semibold text-slate-700 mb-1.5">Format Tanggal & Waktu</label>
+                        <select name="date_format" class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition outline-none">
+                            <option value="l, d F Y H:i" {{ old('date_format', $setting->date_format ?? 'l, d F Y H:i') == 'l, d F Y H:i' ? 'selected' : '' }}>Senin, 17 Agustus 2024 14:30 (Lengkap)</option>
+                            <option value="d F Y H:i" {{ old('date_format', $setting->date_format) == 'd F Y H:i' ? 'selected' : '' }}>17 Agustus 2024 14:30 (Standar)</option>
+                            <option value="d/m/Y H:i" {{ old('date_format', $setting->date_format) == 'd/m/Y H:i' ? 'selected' : '' }}>17/08/2024 14:30 (Ringkas)</option>
+                            <option value="l, d M Y" {{ old('date_format', $setting->date_format) == 'l, d M Y' ? 'selected' : '' }}>Senin, 17 Agu 2024 (Tanpa Waktu)</option>
+                            <option value="d M Y" {{ old('date_format', $setting->date_format) == 'd M Y' ? 'selected' : '' }}>17 Agu 2024 (Singkat)</option>
+                        </select>
+                    </div>
+
+                    <div class="pt-4 border-t border-slate-100">
                         <label class="block text-sm font-semibold text-slate-700 mb-1.5">GitHub Token</label>
                         <p class="text-xs text-slate-500 mb-2">Gunakan format <code class="bg-slate-100 px-1 py-0.5 rounded text-indigo-600">ghp_xxxxxx</code></p>
                         <input type="text" name="github_token" value="{{ old('github_token', $setting->github_token) }}" placeholder="ghp_...................................." class="w-full px-4 py-3 bg-slate-50 border {{ $errors->has('github_token') ? 'border-red-300' : 'border-slate-200' }} rounded-xl text-sm focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition outline-none font-mono">
@@ -58,7 +69,7 @@
                             <span class="w-3 h-3 rounded-full bg-yellow-500/80"></span>
                             <span class="w-3 h-3 rounded-full bg-green-500/80"></span>
                         </div>
-                        <span class="text-xs font-mono text-slate-400 ml-2">storage/logs/laravel.log</span>
+                        <span class="text-xs font-mono text-slate-400 ml-2">storage/logs/system_updates.log</span>
                     </div>
                     <span class="text-xs text-slate-500">Last 100 lines</span>
                 </div>
@@ -75,9 +86,21 @@
                     <svg class="w-5 h-5 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
                     Aksi Sistem
                 </h3>
-                <p class="text-sm text-slate-500 mb-6">Bersihkan cache atau konfigurasi jika sistem mengalami lag atau perubahan belum diterapkan.</p>
+                <p class="text-sm text-slate-500 mb-6">Bersihkan cache atau konfigurasi jika sistem mengalami lag atau pembaruan belum diterapkan.</p>
 
                 <div class="space-y-3">
+                    <form id="updateSystemForm" action="{{ route('admin.settings.update-system') }}" method="POST">
+                        @csrf
+                    </form>
+                    <button type="button" onclick="confirmAction('updateSystemForm', 'Update CBT Lokal?', 'Sistem akan memanggil Github Pull dan menjalankan Migrasi Database terbaru (Jika Ada). Pastikan koneksi aman.', 'info')" class="w-full flex items-center justify-between px-4 py-3 bg-blue-50 hover:bg-blue-100 text-blue-700 font-semibold text-sm rounded-xl border border-blue-200 transition cursor-pointer">
+                        <span class="flex items-center gap-2">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+                            Update CBT (GitHub)
+                        </span>
+                    </button>
+
+                    <div class="border-t border-slate-100 my-4"></div>
+
                     <form id="clearCacheForm" action="{{ route('admin.settings.clear-cache') }}" method="POST">
                         @csrf
                     </form>
@@ -86,7 +109,6 @@
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
                             Clear Cache
                         </span>
-                        <svg class="w-4 h-4 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
                     </button>
 
                     <form id="clearConfigForm" action="{{ route('admin.settings.clear-config') }}" method="POST">
@@ -97,7 +119,6 @@
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
                             Clear Config
                         </span>
-                        <svg class="w-4 h-4 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
                     </button>
                 </div>
             </div>

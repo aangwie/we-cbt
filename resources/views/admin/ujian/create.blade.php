@@ -9,8 +9,17 @@
             <form action="{{ route('admin.ujian.store') }}" method="POST" class="space-y-5" x-data="{ kelas: '{{ old('kelas', '') }}' }">
                 @csrf
                 <div>
-                    <label class="block text-sm font-semibold text-slate-700 mb-1.5">Judul Ujian / Mata Pelajaran</label>
-                    <input type="text" name="judul" value="{{ old('judul') }}" required placeholder="Contoh: Matematika - UTS Semester 1" class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition outline-none">
+                    <label class="block text-sm font-semibold text-slate-700 mb-1.5">Judul Ujian</label>
+                    <input type="text" name="judul" value="{{ old('judul') }}" required placeholder="Contoh: UTS Semester 1" class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition outline-none">
+                </div>
+                <div>
+                    <label class="block text-sm font-semibold text-slate-700 mb-1.5">Mata Pelajaran</label>
+                    <select name="mapel_id" required class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition outline-none">
+                        <option value="">Pilih Mata Pelajaran...</option>
+                        @foreach($mapels as $mapel)
+                            <option value="{{ $mapel->id }}" {{ old('mapel_id') == $mapel->id ? 'selected' : '' }}>{{ $mapel->nama_mapel }}</option>
+                        @endforeach
+                    </select>
                 </div>
                 <div>
                     <label class="block text-sm font-semibold text-slate-700 mb-1.5">Guru Pengampu</label>
@@ -29,16 +38,12 @@
                 {{-- Kelas Selection --}}
                 <div>
                     <label class="block text-sm font-semibold text-slate-700 mb-2">Untuk Kelas</label>
-                    <div class="grid grid-cols-3 gap-3">
-                        @foreach(['VII', 'VIII', 'IX'] as $k)
-                        <label class="relative cursor-pointer">
-                            <input type="radio" name="kelas" value="{{ $k }}" x-model="kelas" class="sr-only peer" {{ old('kelas') === $k ? 'checked' : '' }}>
-                            <div class="flex items-center justify-center px-4 py-3 rounded-xl border-2 text-sm font-semibold transition-all duration-200 peer-checked:border-blue-500 peer-checked:bg-blue-50 peer-checked:text-blue-700 border-slate-200 text-slate-600 hover:border-blue-300 hover:bg-blue-50/30">
-                                Kelas {{ $k }}
-                            </div>
-                        </label>
+                    <select name="kelas" x-model="kelas" class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition outline-none">
+                        <option value="">Pilih Kelas...</option>
+                        @foreach($kelasList as $k)
+                            <option value="{{ $k->nama_kelas }}">{{ $k->nama_kelas }}</option>
                         @endforeach
-                    </div>
+                    </select>
                     <p class="text-xs text-slate-400 mt-1.5">Pilih kelas terlebih dahulu untuk mengaktifkan ujian</p>
                 </div>
 

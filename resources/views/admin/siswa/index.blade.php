@@ -7,10 +7,10 @@
     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
         <p class="text-sm text-slate-500">Total: <span class="font-semibold text-slate-700">{{ $siswas->count() }}</span> siswa</p>
         <div class="flex items-center gap-3">
-            <button onclick="document.getElementById('importModal').classList.remove('hidden')" class="inline-flex items-center gap-2 px-4 py-2.5 bg-emerald-50 text-emerald-600 text-sm font-semibold rounded-xl hover:bg-emerald-100 transition border border-emerald-200">
+            <a href="{{ route('admin.siswa.import.form') }}" class="inline-flex items-center gap-2 px-4 py-2.5 bg-emerald-50 text-emerald-600 text-sm font-semibold rounded-xl hover:bg-emerald-100 transition border border-emerald-200">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
                 Import Excel
-            </button>
+            </a>
             <a href="{{ route('admin.siswa.create') }}" class="inline-flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-blue-600 to-indigo-600 text-white text-sm font-semibold rounded-xl hover:from-blue-700 hover:to-indigo-700 transition shadow-lg shadow-blue-500/25">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
                 Tambah Siswa
@@ -20,7 +20,7 @@
 
     <div class="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
         <div class="overflow-x-auto">
-            <table class="w-full text-sm">
+            <table id="siswaTable" class="w-full text-sm">
                 <thead class="bg-slate-50/80">
                     <tr>
                         <th class="text-left px-6 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">#</th>
@@ -42,7 +42,7 @@
                         <td class="px-6 py-3.5">
                             <span class="inline-flex px-2 py-0.5 rounded-md text-xs font-semibold {{ $siswa->jenis_kelamin === 'L' ? 'bg-blue-100 text-blue-700' : 'bg-pink-100 text-pink-700' }}">{{ $siswa->jenis_kelamin }}</span>
                         </td>
-                        <td class="px-6 py-3.5 text-slate-600">{{ $siswa->tanggal_lahir->format('d/m/Y') }}</td>
+                        <td class="px-6 py-3.5 text-slate-600">@formatDate($siswa->tanggal_lahir, 'd F Y')</td>
                         <td class="px-6 py-3.5">
                             <div class="flex items-center gap-2">
                                 <a href="{{ route('admin.siswa.edit', $siswa) }}" class="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition">
@@ -65,40 +65,36 @@
         </div>
     </div>
 
-    {{-- Import Modal --}}
-    <div id="importModal" class="hidden fixed inset-0 z-50 overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
-        <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
-            <div class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm transition-opacity" aria-hidden="true" onclick="document.getElementById('importModal').classList.add('hidden')"></div>
-            <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
-            <div class="inline-block align-bottom bg-white rounded-2xl text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full border border-slate-100">
-                <form action="{{ route('admin.siswa.import') }}" method="POST" enctype="multipart/form-data">
-                    @csrf
-                    <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
-                        <div class="sm:flex sm:items-start">
-                            <div class="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-emerald-100 sm:mx-0 sm:h-10 sm:w-10">
-                                <svg class="h-6 w-6 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
-                                </svg>
-                            </div>
-                            <div class="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left w-full">
-                                <h3 class="text-lg leading-6 font-medium text-slate-800" id="modal-title">Import Data Siswa</h3>
-                                <div class="mt-2 space-y-3">
-                                    <p class="text-sm text-slate-500">Unggah file Excel (.xlsx) dengan kolom: <b>nama, nisn, kelas, jenis_kelamin</b> (L/P), <b>tanggal_lahir</b> (YYYY-MM-DD).</p>
-                                    <input type="file" name="file_excel" accept=".xlsx,.xls,.csv" required class="w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-emerald-50 file:text-emerald-700 hover:file:bg-emerald-100 transition outline-none">
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="bg-slate-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse border-t border-slate-100">
-                        <button type="submit" class="w-full inline-flex justify-center rounded-xl border border-transparent shadow-sm px-4 py-2 bg-emerald-600 text-base font-medium text-white hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 sm:ml-3 sm:w-auto sm:text-sm transition">
-                            Upload & Import
-                        </button>
-                        <button type="button" onclick="document.getElementById('importModal').classList.add('hidden')" class="mt-3 w-full inline-flex justify-center rounded-xl border border-slate-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-slate-700 hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-slate-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm transition">
-                            Batal
-                        </button>
-                    </div>
-                </form>
-            </div>
-        </div>
-    </div>
+
 @endsection
+
+@push('scripts')
+<link href="https://cdn.jsdelivr.net/npm/simple-datatables@9.0.3/dist/style.css" rel="stylesheet" type="text/css">
+<script src="https://cdn.jsdelivr.net/npm/simple-datatables@9.0.3/dist/umd/simple-datatables.js"></script>
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        if (document.getElementById("siswaTable")) {
+            new simpleDatatables.DataTable("#siswaTable", {
+                searchable: true,
+                perPage: 10,
+                labels: {
+                    placeholder: "Cari data siswa...",
+                    perPage: "data per hal",
+                    noRows: "Tidak ada data siswa ditemukan",
+                    info: "Menampilkan {start} - {end} dari {rows} siswa"
+                }
+            });
+        }
+    });
+</script>
+<style>
+    /* Styling adjustments for Tailwind integration */
+    .dataTable-wrapper { font-family: inherit; }
+    .dataTable-top { padding-bottom: 1rem; }
+    .dataTable-bottom { padding-top: 1rem; border-top: 1px solid #f1f5f9; }
+    .dataTable-input { border: 1px solid #e2e8f0; border-radius: 0.5rem; padding: 0.5rem 1rem; outline: none; }
+    .dataTable-input:focus { border-color: #3b82f6; box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1); }
+    .dataTable-selector { border: 1px solid #e2e8f0; border-radius: 0.5rem; padding: 0.25rem 2rem 0.25rem 0.5rem; }
+    .dataTable-pagination li a { border: border-radius: 0.25rem; }
+</style>
+@endpush

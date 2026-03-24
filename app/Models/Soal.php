@@ -8,6 +8,8 @@ class Soal extends Model
 {
     protected $fillable = [
         'ujian_id',
+        'mapel_id',
+        'kelas',
         'teks_soal',
         'gambar_soal',
         'pilihan_a',
@@ -26,5 +28,10 @@ class Soal extends Model
     public function ujian()
     {
         return $this->belongsTo(Ujian::class);
+    }
+
+    public function mapel()
+    {
+        return $this->belongsTo(Mapel::class);
     }
 }

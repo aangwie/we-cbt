@@ -27,13 +27,14 @@ class AdminController extends Controller
     // ─── Guru CRUD ───
     public function guruIndex()
     {
-        $gurus = User::where('role', 'guru')->latest()->get();
+        $gurus = User::where('role', 'guru')->with('mapels')->latest()->get();
         return view('admin.guru.index', compact('gurus'));
     }
 
     public function guruCreate()
     {
-        return view('admin.guru.create');
+        $mapels = \App\Models\Mapel::orderBy('nama_mapel')->get();
+        return view('admin.guru.create', compact('mapels'));
     }
 
     public function guruStore(Request $request)
@@ -42,21 +43,28 @@ class AdminController extends Controller
             'name' => 'required|string|max:255',
             'email' => 'required|email|unique:users,email',
             'password' => 'required|string|min:6|confirmed',
+            'mapels' => 'nullable|array',
+            'mapels.*' => 'exists:mapels,id',
         ]);
 
-        User::create([
+        $guru = User::create([
             'name' => $request->name,
             'email' => $request->email,
             'password' => bcrypt($request->password),
             'role' => 'guru',
         ]);
 
+        if ($request->has('mapels')) {
+            $guru->mapels()->sync($request->mapels);
+        }
+
         return redirect()->route('admin.guru.index')->with('success', 'Guru berhasil ditambahkan.');
     }
 
     public function guruEdit(User $guru)
     {
-        return view('admin.guru.edit', compact('guru'));
+        $mapels = \App\Models\Mapel::orderBy('nama_mapel')->get();
+        return view('admin.guru.edit', compact('guru', 'mapels'));
     }
 
     public function guruUpdate(Request $request, User $guru)
@@ -65,6 +73,8 @@ class AdminController extends Controller
             'name' => 'required|string|max:255',
             'email' => 'required|email|unique:users,email,' . $guru->id,
             'password' => 'nullable|string|min:6|confirmed',
+            'mapels' => 'nullable|array',
+            'mapels.*' => 'exists:mapels,id',
         ]);
 
         $guru->update([
@@ -72,6 +82,12 @@ class AdminController extends Controller
             'email' => $request->email,
             'password' => $request->password ? bcrypt($request->password) : $guru->password,
         ]);
+
+        if ($request->has('mapels')) {
+            $guru->mapels()->sync($request->mapels);
+        } else {
+            $guru->mapels()->detach();
+        }
 
         return redirect()->route('admin.guru.index')->with('success', 'Guru berhasil diperbarui.');
     }
@@ -91,7 +107,8 @@ class AdminController extends Controller
 
     public function siswaCreate()
     {
-        return view('admin.siswa.create');
+        $kelasList = \App\Models\Kelas::orderBy('nama_kelas')->get();
+        return view('admin.siswa.create', compact('kelasList'));
     }
 
     public function siswaStore(Request $request)
@@ -100,7 +117,7 @@ class AdminController extends Controller
             'name' => 'required|string|max:255',
             'tanggal_lahir' => 'required|date',
             'jenis_kelamin' => 'required|in:L,P',
-            'kelas' => 'required|string|max:50',
+            'kelas' => 'required|exists:kelas,nama_kelas',
             'nisn' => 'required|string|max:20|unique:siswas,nisn',
         ]);
 
@@ -111,7 +128,8 @@ class AdminController extends Controller
 
     public function siswaEdit(Siswa $siswa)
     {
-        return view('admin.siswa.edit', compact('siswa'));
+        $kelasList = \App\Models\Kelas::orderBy('nama_kelas')->get();
+        return view('admin.siswa.edit', compact('siswa', 'kelasList'));
     }
 
     public function siswaUpdate(Request $request, Siswa $siswa)
@@ -120,7 +138,7 @@ class AdminController extends Controller
             'name' => 'required|string|max:255',
             'tanggal_lahir' => 'required|date',
             'jenis_kelamin' => 'required|in:L,P',
-            'kelas' => 'required|string|max:50',
+            'kelas' => 'required|exists:kelas,nama_kelas',
             'nisn' => 'required|string|max:20|unique:siswas,nisn,' . $siswa->id,
         ]);
 
@@ -135,6 +153,11 @@ class AdminController extends Controller
         return redirect()->route('admin.siswa.index')->with('success', 'Siswa berhasil dihapus.');
     }
 
+    public function siswaImportForm()
+    {
+        return view('admin.siswa.import');
+    }
+
     public function siswaImport(Request $request)
     {
         $request->validate([
@@ -142,37 +165,114 @@ class AdminController extends Controller
         ]);
 
         try {
-            \Maatwebsite\Excel\Facades\Excel::import(new \App\Imports\SiswaImport, $request->file('file_excel'));
-            return back()->with('success', 'Data siswa berhasil diimport.');
+            $rows = \Maatwebsite\Excel\Facades\Excel::toCollection(new \App\Imports\SiswaImport, $request->file('file_excel'))->first() ?? collect();
+
+            $success = 0;
+            $failed = 0;
+            $errors = [];
+            
+            $existingNisn = \App\Models\Siswa::pluck('nisn')->toArray();
+            $existingKelasMap = \App\Models\Kelas::pluck('nama_kelas')->mapWithKeys(function ($name) {
+                return [strtolower(trim($name)) => trim($name)];
+            })->toArray();
+
+            foreach ($rows as $index => $row) {
+                // Ensure row is not completely empty
+                if (!isset($row['nama']) && !isset($row['nisn']) && !isset($row['kelas'])) continue;
+
+                $nama = isset($row['nama']) ? trim($row['nama']) : null;
+                $nisn = isset($row['nisn']) ? trim($row['nisn']) : null;
+                $kelasRaw = isset($row['kelas']) ? trim($row['kelas']) : null;
+                $kelasKey = $kelasRaw ? strtolower($kelasRaw) : null;
+                $jk = strtoupper(trim($row['jenis_kelamin'] ?? ''));
+                $tgllahir = isset($row['tanggal_lahir']) ? trim($row['tanggal_lahir']) : null;
+
+                if (!$nama || !$nisn || !$kelasRaw || !in_array($jk, ['L', 'P']) || !$tgllahir) {
+                    $failed++;
+                    $errors[] = "Baris " . ($index + 2) . ": Data tidak lengkap atau format (L/P) salah.";
+                    continue;
+                }
+
+                if (in_array($nisn, $existingNisn)) {
+                    $failed++;
+                    $errors[] = "Baris " . ($index + 2) . ": NISN {$nisn} sudah terdaftar.";
+                    continue;
+                }
+
+                if (!isset($existingKelasMap[$kelasKey])) {
+                    $failed++;
+                    $errors[] = "Baris " . ($index + 2) . ": Kelas '{$kelasRaw}' belum terdaftar di menu Kelola Kelas.";
+                    continue;
+                }
+                
+                $kelas = $existingKelasMap[$kelasKey];
+
+                if (is_numeric($tgllahir)) {
+                    $tgllahir = \PhpOffice\PhpSpreadsheet\Shared\Date::excelToDateTimeObject($tgllahir)->format('Y-m-d');
+                } else {
+                    $tgllahir = date('Y-m-d', strtotime($tgllahir));
+                }
+
+                \App\Models\Siswa::create([
+                    'name' => $nama,
+                    'nisn' => $nisn,
+                    'kelas' => $kelas,
+                    'jenis_kelamin' => $jk,
+                    'tanggal_lahir' => $tgllahir,
+                ]);
+
+                $existingNisn[] = $nisn;
+                $success++;
+            }
+
+            return response()->json([
+                'status' => 'success',
+                'success_count' => $success,
+                'failed_count' => $failed,
+                'errors' => array_slice($errors, 0, 10) // return up to 10 errors to avoid huge payload
+            ]);
+
         } catch (\Exception $e) {
-            return back()->with('error', 'Terjadi kesalahan saat import: ' . $e->getMessage());
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Terjadi kesalahan saat import: ' . $e->getMessage()
+            ], 500);
         }
+    }
+
+    public function siswaTemplate()
+    {
+        return \Maatwebsite\Excel\Facades\Excel::download(new \App\Exports\SiswaTemplateExport, 'template_siswa.xlsx');
     }
 
     // ─── Ujian CRUD (Admin only) ───
     public function ujianIndex()
     {
-        $ujians = Ujian::with('guru')->withCount('soals')->latest()->get();
+        $ujians = Ujian::with(['guru', 'mapel'])->withCount('soals')->latest()->get();
         return view('admin.ujian.index', compact('ujians'));
     }
 
     public function ujianCreate()
     {
         $gurus = User::where('role', 'guru')->get();
-        return view('admin.ujian.create', compact('gurus'));
+        $kelasList = \App\Models\Kelas::orderBy('nama_kelas')->get();
+        $mapels = \App\Models\Mapel::orderBy('nama_mapel')->get();
+        return view('admin.ujian.create', compact('gurus', 'kelasList', 'mapels'));
     }
 
     public function ujianStore(Request $request)
     {
         $request->validate([
             'judul' => 'required|string|max:255',
+            'mapel_id' => 'required|exists:mapels,id',
             'guru_id' => 'required|exists:users,id',
             'durasi' => 'required|integer|min:1',
-            'kelas' => 'nullable|in:VII,VIII,IX',
+            'kelas' => 'nullable|exists:kelas,nama_kelas',
         ]);
 
         Ujian::create([
             'judul' => $request->judul,
+            'mapel_id' => $request->mapel_id,
             'guru_id' => $request->guru_id,
             'token' => strtoupper(Str::random(6)),
             'is_active' => $request->boolean('is_active'),
@@ -204,20 +304,24 @@ class AdminController extends Controller
     public function ujianEdit(Ujian $ujian)
     {
         $gurus = User::where('role', 'guru')->get();
-        return view('admin.ujian.edit', compact('ujian', 'gurus'));
+        $kelasList = \App\Models\Kelas::orderBy('nama_kelas')->get();
+        $mapels = \App\Models\Mapel::orderBy('nama_mapel')->get();
+        return view('admin.ujian.edit', compact('ujian', 'gurus', 'kelasList', 'mapels'));
     }
 
     public function ujianUpdate(Request $request, Ujian $ujian)
     {
         $request->validate([
             'judul' => 'required|string|max:255',
+            'mapel_id' => 'required|exists:mapels,id',
             'guru_id' => 'required|exists:users,id',
             'durasi' => 'required|integer|min:1',
-            'kelas' => 'nullable|in:VII,VIII,IX',
+            'kelas' => 'nullable|exists:kelas,nama_kelas',
         ]);
 
         $ujian->update([
             'judul' => $request->judul,
+            'mapel_id' => $request->mapel_id,
             'guru_id' => $request->guru_id,
             'is_active' => $request->boolean('is_active'),
             'durasi' => $request->durasi,

@@ -79,7 +79,25 @@ class SiswaController extends Controller
     public function konfirmasi()
     {
         $siswa = $this->getSiswa();
-        return view('siswa.konfirmasi', compact('siswa'));
+        $activeUjians = Ujian::where('is_active', true)
+                             ->where('kelas', $siswa->kelas)
+                             ->with(['mapel', 'guru'])
+                             ->get();
+                             
+        return view('siswa.konfirmasi', compact('siswa', 'activeUjians'));
+    }
+
+    // ─── Dedicated Token Entry Page ───
+    public function ujianKonfirmasi(Ujian $ujian)
+    {
+        $siswa = $this->getSiswa();
+        
+        // Ensure valid student class access
+        if (!$ujian->is_active || $ujian->kelas !== $siswa->kelas) {
+            abort(404);
+        }
+
+        return view('siswa.ujian_konfirmasi', compact('siswa', 'ujian'));
     }
 
     // ─── Validate token and start/resume exam ───
@@ -87,16 +105,18 @@ class SiswaController extends Controller
     {
         $request->validate([
             'token' => 'required|string',
+            'ujian_id' => 'required|exists:ujians,id'
         ]);
 
         $siswa = $this->getSiswa();
 
-        $ujian = Ujian::where('token', strtoupper($request->token))
+        $ujian = Ujian::where('id', $request->ujian_id)
+            ->where('token', strtoupper($request->token))
             ->where('is_active', true)
             ->first();
 
         if (!$ujian) {
-            return back()->withErrors(['token' => 'Token tidak valid atau ujian tidak aktif.'])->withInput();
+            return back()->withErrors(['token' => 'Token tidak valid untuk ujian ini.'])->withInput();
         }
 
         // Check if already completed this exam

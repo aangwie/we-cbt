@@ -31,7 +31,12 @@
                 </div>
                 <div>
                     <label class="block text-sm font-semibold text-slate-700 mb-1.5">Kelas</label>
-                    <input type="text" name="kelas" value="{{ old('kelas', $siswa->kelas) }}" required class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition outline-none">
+                    <select name="kelas" required class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition outline-none">
+                        <option value="">Pilih Kelas...</option>
+                        @foreach($kelasList as $k)
+                            <option value="{{ $k->nama_kelas }}" {{ old('kelas', $siswa->kelas) == $k->nama_kelas ? 'selected' : '' }}>{{ $k->nama_kelas }}</option>
+                        @endforeach
+                    </select>
                 </div>
                 <div class="flex items-center gap-3 pt-2">
                     <button type="submit" class="px-6 py-2.5 bg-gradient-to-r from-blue-600 to-indigo-600 text-white text-sm font-semibold rounded-xl hover:from-blue-700 hover:to-indigo-700 transition shadow-lg shadow-blue-500/25">Update</button>

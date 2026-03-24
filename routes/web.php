@@ -28,7 +28,9 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'role:admin'])->grou
     Route::get('/siswa', [AdminController::class, 'siswaIndex'])->name('siswa.index');
     Route::get('/siswa/create', [AdminController::class, 'siswaCreate'])->name('siswa.create');
     Route::post('/siswa', [AdminController::class, 'siswaStore'])->name('siswa.store');
+    Route::get('/siswa/import', [AdminController::class, 'siswaImportForm'])->name('siswa.import.form');
     Route::post('/siswa/import', [AdminController::class, 'siswaImport'])->name('siswa.import');
+    Route::get('/siswa/template', [AdminController::class, 'siswaTemplate'])->name('siswa.template');
     Route::get('/siswa/{siswa}/edit', [AdminController::class, 'siswaEdit'])->name('siswa.edit');
     Route::put('/siswa/{siswa}', [AdminController::class, 'siswaUpdate'])->name('siswa.update');
     Route::delete('/siswa/{siswa}', [AdminController::class, 'siswaDestroy'])->name('siswa.destroy');
@@ -45,6 +47,7 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'role:admin'])->grou
 
     // Soal Management (Admin)
     Route::get('/soal', [AdminSoalController::class, 'index'])->name('soal.index');
+    Route::get('/soal/detail', [AdminSoalController::class, 'detail'])->name('soal.detail');
     Route::get('/soal/create', [AdminSoalController::class, 'create'])->name('soal.create');
     Route::post('/soal', [AdminSoalController::class, 'store'])->name('soal.store');
     Route::get('/soal/{soal}/edit', [AdminSoalController::class, 'edit'])->name('soal.edit');
@@ -57,9 +60,26 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'role:admin'])->grou
     Route::put('/hasil/{hasil_ujian}', [\App\Http\Controllers\AdminHasilController::class, 'update'])->name('hasil.update');
     Route::delete('/hasil/{hasil_ujian}', [\App\Http\Controllers\AdminHasilController::class, 'destroy'])->name('hasil.destroy');
 
+    // Kelas Management (Admin)
+    Route::get('/kelas', [\App\Http\Controllers\AdminKelasController::class, 'index'])->name('kelas.index');
+    Route::get('/kelas/create', [\App\Http\Controllers\AdminKelasController::class, 'create'])->name('kelas.create');
+    Route::post('/kelas', [\App\Http\Controllers\AdminKelasController::class, 'store'])->name('kelas.store');
+    Route::get('/kelas/{kelas}/edit', [\App\Http\Controllers\AdminKelasController::class, 'edit'])->name('kelas.edit');
+    Route::put('/kelas/{kelas}', [\App\Http\Controllers\AdminKelasController::class, 'update'])->name('kelas.update');
+    Route::delete('/kelas/{kelas}', [\App\Http\Controllers\AdminKelasController::class, 'destroy'])->name('kelas.destroy');
+
+    // Mapel Management
+    Route::get('/mapel', [\App\Http\Controllers\AdminMapelController::class, 'index'])->name('mapel.index');
+    Route::get('/mapel/create', [\App\Http\Controllers\AdminMapelController::class, 'create'])->name('mapel.create');
+    Route::post('/mapel', [\App\Http\Controllers\AdminMapelController::class, 'store'])->name('mapel.store');
+    Route::get('/mapel/{mapel}/edit', [\App\Http\Controllers\AdminMapelController::class, 'edit'])->name('mapel.edit');
+    Route::put('/mapel/{mapel}', [\App\Http\Controllers\AdminMapelController::class, 'update'])->name('mapel.update');
+    Route::delete('/mapel/{mapel}', [\App\Http\Controllers\AdminMapelController::class, 'destroy'])->name('mapel.destroy');
+
     // Settings
     Route::get('/settings', [\App\Http\Controllers\AdminSettingController::class, 'index'])->name('settings.index');
     Route::put('/settings', [\App\Http\Controllers\AdminSettingController::class, 'update'])->name('settings.update');
+    Route::post('/settings/update-system', [\App\Http\Controllers\AdminSettingController::class, 'updateSystem'])->name('settings.update-system');
     Route::post('/settings/clear-cache', [\App\Http\Controllers\AdminSettingController::class, 'clearCache'])->name('settings.clear-cache');
     Route::post('/settings/clear-config', [\App\Http\Controllers\AdminSettingController::class, 'clearConfig'])->name('settings.clear-config');
 });
@@ -70,6 +90,7 @@ Route::prefix('guru')->name('guru.')->middleware(['auth', 'role:guru'])->group(f
 
     // Soal Management
     Route::get('/soal', [GuruController::class, 'soalIndex'])->name('soal.index');
+    Route::get('/soal/detail', [GuruController::class, 'soalDetail'])->name('soal.detail');
     Route::get('/soal/create', [GuruController::class, 'soalCreate'])->name('soal.create');
     Route::post('/soal', [GuruController::class, 'soalStore'])->name('soal.store');
     Route::get('/soal/{soal}/edit', [GuruController::class, 'soalEdit'])->name('soal.edit');
@@ -85,6 +106,7 @@ Route::prefix('siswa')->name('siswa.')->middleware('siswa')->group(function () {
     Route::get('/dashboard', [SiswaController::class, 'dashboard'])->name('dashboard');
     Route::get('/konfirmasi', [SiswaController::class, 'konfirmasi'])->name('konfirmasi');
     Route::post('/validate-token', [SiswaController::class, 'validateToken'])->name('validate-token');
+    Route::get('/ujian/{ujian}/konfirmasi', [SiswaController::class, 'ujianKonfirmasi'])->name('ujian.konfirmasi');
     Route::get('/ujian/{ujian}', [SiswaController::class, 'ujian'])->name('ujian');
     Route::post('/ujian/{ujian}/submit', [SiswaController::class, 'submitUjian'])->name('ujian.submit');
     Route::post('/ujian/{ujian}/save-answer', [SiswaController::class, 'saveAnswer'])->name('ujian.save-answer');

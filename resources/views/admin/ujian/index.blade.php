@@ -19,6 +19,7 @@
                     <tr>
                         <th class="text-left px-6 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">#</th>
                         <th class="text-left px-6 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">Judul</th>
+                        <th class="text-left px-6 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">Mata Pelajaran</th>
                         <th class="text-left px-6 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">Guru</th>
                         <th class="text-left px-6 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">Token</th>
                         <th class="text-left px-6 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">Soal</th>
@@ -33,6 +34,13 @@
                     <tr class="hover:bg-slate-50/50 transition">
                         <td class="px-6 py-3.5 text-slate-500">{{ $i + 1 }}</td>
                         <td class="px-6 py-3.5 font-medium text-slate-800">{{ $ujian->judul }}</td>
+                        <td class="px-6 py-3.5">
+                            @if($ujian->mapel)
+                                <span class="px-2.5 py-1 bg-indigo-50 text-indigo-700 rounded-md text-xs font-bold">{{ $ujian->mapel->nama_mapel }}</span>
+                            @else
+                                <span class="text-xs text-slate-400 italic">Belum diset</span>
+                            @endif
+                        </td>
                         <td class="px-6 py-3.5 text-slate-600">{{ $ujian->guru->name }}</td>
                         <td class="px-6 py-3.5"><code class="px-2.5 py-1 bg-slate-100 rounded-lg text-xs font-mono font-bold text-slate-700">{{ $ujian->token }}</code></td>
                         <td class="px-6 py-3.5 text-slate-600">{{ $ujian->soals_count }}</td>

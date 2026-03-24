@@ -11,14 +11,23 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     @vite(['resources/css/app.css', 'resources/js/app.js'])
+    <style>
+        @media (min-width: 1024px) {
+            .sidebar-minimized-width { width: 5rem !important; }
+        }
+    </style>
 </head>
 <body class="min-h-screen bg-slate-50 font-sans text-slate-800">
-    <div class="flex min-h-screen" x-data="{ sidebarOpen: false }">
+    <div class="flex min-h-screen" x-data="{ sidebarOpen: false, sidebarMinimized: JSON.parse(localStorage.getItem('sidebarMinimized')) || false }" x-init="$watch('sidebarMinimized', val => localStorage.setItem('sidebarMinimized', val))">
         {{-- Sidebar Overlay (mobile) --}}
         <div x-show="sidebarOpen" x-transition:enter="transition-opacity ease-out duration-300" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100" x-transition:leave="transition-opacity ease-in duration-200" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0" @click="sidebarOpen = false" class="fixed inset-0 bg-black/40 backdrop-blur-sm z-40 lg:hidden" style="display:none;"></div>
 
         {{-- Sidebar --}}
-        <aside :class="sidebarOpen ? 'translate-x-0' : '-translate-x-full'" class="fixed inset-y-0 left-0 z-50 w-64 bg-gradient-to-b from-slate-900 via-slate-800 to-slate-900 text-white transform transition-transform duration-300 ease-in-out lg:translate-x-0 lg:static lg:inset-0 flex flex-col shadow-2xl">
+        <aside :class="{
+            'translate-x-0': sidebarOpen,
+            '-translate-x-full': !sidebarOpen,
+            'sidebar-minimized-width': sidebarMinimized
+        }" class="fixed inset-y-0 left-0 z-50 w-64 bg-gradient-to-b from-slate-900 via-slate-800 to-slate-900 text-white transform transition-all duration-300 ease-in-out lg:translate-x-0 lg:static lg:inset-0 flex flex-col shadow-2xl">
             {{-- Logo --}}
             <div class="flex items-center gap-3 px-6 py-5 border-b border-white/10">
                 @if(isset($appSetting) && $appSetting->app_logo)
@@ -30,7 +39,7 @@
                         <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
                     </div>
                 @endif
-                <div>
+                <div x-show="!sidebarMinimized" x-transition.duration.300ms class="whitespace-nowrap overflow-hidden">
                     <h1 class="text-lg font-bold tracking-tight">{{ isset($appSetting) ? $appSetting->app_name : 'WeTest' }}</h1>
                     <p class="text-[11px] text-slate-400 -mt-0.5">Computer Based Test</p>
                 </div>
@@ -45,12 +54,12 @@
             </nav>
 
             {{-- User Info --}}
-            <div class="px-4 py-4 border-t border-white/10">
-                <div class="flex items-center gap-3">
-                    <div class="w-9 h-9 bg-gradient-to-br from-emerald-400 to-teal-500 rounded-full flex items-center justify-center text-sm font-bold shadow-lg">
+            <div class="px-4 py-4 border-t border-white/10 overflow-hidden transition-all duration-300">
+                <div class="flex items-center gap-3" :class="sidebarMinimized ? 'justify-center' : ''">
+                    <div class="w-9 h-9 bg-gradient-to-br from-emerald-400 to-teal-500 rounded-full flex items-center justify-center text-sm font-bold shadow-lg shrink-0">
                         {{ strtoupper(substr(auth()->check() ? auth()->user()->name : session('siswa_name', 'S'), 0, 1)) }}
                     </div>
-                    <div class="flex-1 min-w-0">
+                    <div class="flex-1 min-w-0" x-show="!sidebarMinimized" x-transition.duration.300ms>
                         <p class="text-sm font-semibold truncate">{{ auth()->check() ? auth()->user()->name : session('siswa_name', 'Siswa') }}</p>
                         <p class="text-[11px] text-slate-400 truncate capitalize">{{ auth()->check() ? auth()->user()->role : 'Siswa' }}</p>
                     </div>
@@ -66,6 +75,10 @@
                     <div class="flex items-center gap-3">
                         <button @click="sidebarOpen = true" class="lg:hidden p-2 rounded-lg hover:bg-slate-100 text-slate-500 transition">
                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
+                        </button>
+                        <button @click="sidebarMinimized = !sidebarMinimized" class="hidden lg:block p-2 rounded-lg hover:bg-slate-100 text-slate-500 transition" title="Toggle Sidebar">
+                            <svg x-show="!sidebarMinimized" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="display:none;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 19l-7-7 7-7m8 14l-7-7 7-7"/></svg>
+                            <svg x-show="sidebarMinimized" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="display:none;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 5l7 7-7 7M5 5l7 7-7 7"/></svg>
                         </button>
                         <h2 class="text-lg font-bold text-slate-800">@yield('page-title', 'Dashboard')</h2>
                     </div>

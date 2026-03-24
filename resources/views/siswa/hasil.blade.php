@@ -46,7 +46,7 @@
                 </div>
                 <div class="bg-slate-50 rounded-xl px-4 py-3 col-span-2">
                     <p class="text-xs text-slate-500">Waktu Selesai</p>
-                    <p class="text-sm font-semibold text-slate-800 mt-0.5">{{ $hasil->tgl_selesai->format('d F Y, H:i') }}</p>
+                    <p class="text-sm font-semibold text-slate-800 mt-0.5">@formatDate($hasil->tgl_selesai)</p>
                 </div>
             </div>
         </div>

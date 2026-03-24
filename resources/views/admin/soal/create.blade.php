@@ -16,6 +16,25 @@
                             <option value="{{ $ujian->id }}" {{ old('ujian_id') == $ujian->id ? 'selected' : '' }}>{{ $ujian->judul }} ({{ $ujian->guru->name }})</option>
                         @endforeach
                     </select>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-semibold text-slate-700 mb-1.5">Mata Pelajaran</label>
+                        <select name="mapel_id" required class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition outline-none">
+                            <option value="">Pilih Mata Pelajaran...</option>
+                            @foreach($mapels as $mapel)
+                                <option value="{{ $mapel->id }}" {{ old('mapel_id', request('mapel_id')) == $mapel->id ? 'selected' : '' }}>{{ $mapel->nama_mapel }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-semibold text-slate-700 mb-1.5">Kelas</label>
+                        <select name="kelas" required class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition outline-none">
+                            <option value="">Pilih Kelas...</option>
+                            @foreach($kelasList as $k)
+                                <option value="{{ $k->nama_kelas }}" {{ old('kelas', request('kelas')) == $k->nama_kelas ? 'selected' : '' }}>{{ $k->nama_kelas }}</option>
+                            @endforeach
+                        </select>
+                    </div>
                 </div>
 
                 <div>

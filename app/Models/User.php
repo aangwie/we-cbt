@@ -30,6 +30,11 @@ class User extends Authenticatable
         ];
     }
 
+    public function mapels()
+    {
+        return $this->belongsToMany(Mapel::class, 'guru_mapel', 'user_id', 'mapel_id');
+    }
+
     public function isAdmin(): bool
     {
         return $this->role === 'admin';

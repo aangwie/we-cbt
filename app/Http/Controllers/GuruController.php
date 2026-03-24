@@ -26,23 +26,58 @@ class GuruController extends Controller
     public function soalIndex()
     {
         $guru = auth()->user();
-        $ujians = Ujian::where('guru_id', $guru->id)->with('soals')->get();
-        return view('guru.soal.index', compact('ujians'));
+        $validMapels = $guru->mapels()->pluck('mapels.id')->toArray();
+
+        // Get grouped mapel and kelas summaries for authorized mapels
+        $summaries = \Illuminate\Support\Facades\DB::table('soals')
+            ->join('mapels', 'soals.mapel_id', '=', 'mapels.id')
+            ->whereIn('mapels.id', $validMapels)
+            ->select('mapels.id as mapel_id', 'mapels.nama_mapel', 'mapels.kode_mapel', 'soals.kelas', \Illuminate\Support\Facades\DB::raw('count(*) as total_soal'))
+            ->groupBy('mapels.id', 'mapels.nama_mapel', 'mapels.kode_mapel', 'soals.kelas')
+            ->orderBy('mapels.nama_mapel')
+            ->orderBy('soals.kelas')
+            ->get();
+
+        return view('guru.soal.index', compact('summaries'));
+    }
+
+    public function soalDetail(Request $request)
+    {
+        $guru = auth()->user();
+        $validMapels = $guru->mapels()->pluck('mapels.id')->toArray();
+
+        $mapel_id = $request->mapel_id;
+        $kelas = $request->kelas;
+
+        abort_if(!$mapel_id || !$kelas || !in_array($mapel_id, $validMapels), 404);
+
+        $mapel = \App\Models\Mapel::findOrFail($mapel_id);
+        $soals = Soal::where('mapel_id', $mapel_id)
+            ->where('kelas', $kelas)
+            ->with('ujian')
+            ->get();
+
+        return view('guru.soal.detail', compact('mapel', 'kelas', 'soals'));
     }
 
     public function soalCreate()
     {
         $guru = auth()->user();
         $ujians = Ujian::where('guru_id', $guru->id)->get();
-        return view('guru.soal.create', compact('ujians'));
+        $mapels = $guru->mapels()->orderBy('nama_mapel')->get();
+        $kelasList = \App\Models\Kelas::orderBy('nama_kelas')->get();
+        return view('guru.soal.create', compact('ujians', 'mapels', 'kelasList'));
     }
 
     public function soalStore(Request $request)
     {
         $guru = auth()->user();
 
+        $validMapels = $guru->mapels()->pluck('mapels.id')->toArray();
         $request->validate([
             'ujian_id' => 'required|exists:ujians,id',
+            'mapel_id' => 'required|in:' . implode(',', $validMapels),
+            'kelas' => 'required|exists:kelas,nama_kelas',
             'teks_soal' => 'required|string',
             'gambar_soal' => 'nullable|image|max:500',
             'pilihan_a' => 'required|string',
@@ -62,7 +97,7 @@ class GuruController extends Controller
         $ujian = Ujian::where('id', $request->ujian_id)->where('guru_id', $guru->id)->firstOrFail();
 
         $data = $request->only([
-            'ujian_id', 'teks_soal',
+            'ujian_id', 'mapel_id', 'kelas', 'teks_soal',
             'pilihan_a', 'pilihan_b', 'pilihan_c', 'pilihan_d', 'pilihan_e',
             'jawaban_benar',
         ]);
@@ -77,7 +112,10 @@ class GuruController extends Controller
 
         Soal::create($data);
 
-        return redirect()->route('guru.soal.index')->with('success', 'Soal berhasil ditambahkan.');
+        return redirect()->route('guru.soal.detail', [
+            'mapel_id' => $data['mapel_id'],
+            'kelas' => $data['kelas']
+        ])->with('success', 'Soal berhasil ditambahkan.');
     }
 
     public function soalEdit(Soal $soal)
@@ -86,8 +124,10 @@ class GuruController extends Controller
         // Verify ownership
         $ujian = Ujian::where('id', $soal->ujian_id)->where('guru_id', $guru->id)->firstOrFail();
         $ujians = Ujian::where('guru_id', $guru->id)->get();
+        $mapels = $guru->mapels()->orderBy('nama_mapel')->get();
+        $kelasList = \App\Models\Kelas::orderBy('nama_kelas')->get();
 
-        return view('guru.soal.edit', compact('soal', 'ujians'));
+        return view('guru.soal.edit', compact('soal', 'ujians', 'mapels', 'kelasList'));
     }
 
     public function soalUpdate(Request $request, Soal $soal)
@@ -95,8 +135,11 @@ class GuruController extends Controller
         $guru = auth()->user();
         Ujian::where('id', $soal->ujian_id)->where('guru_id', $guru->id)->firstOrFail();
 
+        $validMapels = $guru->mapels()->pluck('mapels.id')->toArray();
         $request->validate([
             'ujian_id' => 'required|exists:ujians,id',
+            'mapel_id' => 'required|in:' . implode(',', $validMapels),
+            'kelas' => 'required|exists:kelas,nama_kelas',
             'teks_soal' => 'required|string',
             'gambar_soal' => 'nullable|image|max:500',
             'pilihan_a' => 'required|string',
@@ -113,7 +156,7 @@ class GuruController extends Controller
         ]);
 
         $data = $request->only([
-            'ujian_id', 'teks_soal',
+            'ujian_id', 'mapel_id', 'kelas', 'teks_soal',
             'pilihan_a', 'pilihan_b', 'pilihan_c', 'pilihan_d', 'pilihan_e',
             'jawaban_benar',
         ]);
@@ -131,13 +174,19 @@ class GuruController extends Controller
 
         $soal->update($data);
 
-        return redirect()->route('guru.soal.index')->with('success', 'Soal berhasil diperbarui.');
+        return redirect()->route('guru.soal.detail', [
+            'mapel_id' => $data['mapel_id'],
+            'kelas' => $data['kelas']
+        ])->with('success', 'Soal berhasil diperbarui.');
     }
 
     public function soalDestroy(Soal $soal)
     {
         $guru = auth()->user();
         Ujian::where('id', $soal->ujian_id)->where('guru_id', $guru->id)->firstOrFail();
+
+        $mapel_id = $soal->mapel_id;
+        $kelas = $soal->kelas;
 
         // Delete associated images
         $imageFields = ['gambar_soal', 'gambar_a', 'gambar_b', 'gambar_c', 'gambar_d', 'gambar_e'];
@@ -149,7 +198,10 @@ class GuruController extends Controller
 
         $soal->delete();
 
-        return redirect()->route('guru.soal.index')->with('success', 'Soal berhasil dihapus.');
+        return redirect()->route('guru.soal.detail', [
+            'mapel_id' => $mapel_id,
+            'kelas' => $kelas
+        ])->with('success', 'Soal berhasil dihapus.');
     }
 
     // ─── Hasil Ujian (View Only) ───
