@@ -151,7 +151,7 @@ Aplikasi dapat diakses di: **http://localhost:8000**
 ![Monitoring Ujian](raw/ujian_aktif.png)
 
 ### 7. Halaman Ujian Aktif
-![Ujian Aktif](raw/ujian_aktif.png)
+![Ujian Aktif](raw/pretest.png)
 
 ### 8. Halaman Hasil Ujian
 ![Hasil Ujian](raw/hasil_ujian.png)
