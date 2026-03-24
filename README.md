@@ -130,6 +130,34 @@ Aplikasi dapat diakses di: **http://localhost:8000**
 
 ---
 
+## 🖼️ Screenshot
+
+### 1. Halaman Login
+![Login](raw/login.png)
+
+### 2. Halaman Dashboard Admin
+![Dashboard Admin](raw/dash_admin.png)
+
+### 3. Halaman Dashboard Siswa
+![Dashboard Siswa](raw/dash_siswa.png)
+
+### 4. Halaman Manajmen Ujian
+![Manajemen Ujian](raw/manajemen_ujian.png)
+
+### 5. Halaman Token Ujian
+![Token Ujian](raw/token_ujian.png)
+
+### 6. Halaman Monitoring Ujian
+![Monitoring Ujian](raw/ujian_aktif.png)
+
+### 7. Halaman Ujian Aktif
+![Ujian Aktif](raw/ujian_aktif.png)
+
+### 8. Halaman Hasil Ujian
+![Hasil Ujian](raw/hasil_ujian.png)
+
+
+
 ## 🔑 Cara Akses
 
 ### Admin
