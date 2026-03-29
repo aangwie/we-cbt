@@ -93,6 +93,7 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'role:admin'])->grou
     Route::post('/settings/update-system', [\App\Http\Controllers\AdminSettingController::class, 'updateSystem'])->name('settings.update-system');
     Route::post('/settings/clear-cache', [\App\Http\Controllers\AdminSettingController::class, 'clearCache'])->name('settings.clear-cache');
     Route::post('/settings/clear-config', [\App\Http\Controllers\AdminSettingController::class, 'clearConfig'])->name('settings.clear-config');
+    Route::post('/settings/link-storage', [\App\Http\Controllers\AdminSettingController::class, 'linkStorage'])->name('settings.link-storage');
 });
 
 // ─── Guru Routes ───

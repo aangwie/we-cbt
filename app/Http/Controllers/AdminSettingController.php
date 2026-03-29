@@ -118,6 +118,41 @@ class AdminSettingController extends Controller
         return redirect()->route('admin.settings.index')->with('success', 'Config berhasil dibersihkan.');
     }
 
+    public function linkStorage()
+    {
+        try {
+            Artisan::call('storage:link');
+            $log = Artisan::output();
+            
+            // If artisan output is empty but successful, provide a default success message
+            if (empty(trim($log))) {
+                $log = "The [public/storage] link has been connected to [storage/app/public].";
+            }
+            
+            $this->logSystemAction('Link Storage', trim($log));
+            
+            return redirect()->route('admin.settings.index')->with('success', 'Storage link berhasil dibuat. ' . $log);
+        } catch (\Exception $e) {
+            $this->logSystemAction('Link Storage (Error)', $e->getMessage());
+            
+            // Fallback for shared hosting if Artisan fails
+            try {
+                $target = storage_path('app/public');
+                $link = public_path('storage');
+                
+                if (file_exists($link)) {
+                    return redirect()->route('admin.settings.index')->withErrors(['update' => 'Symlink sudah ada atau tidak bisa ditimpa.']);
+                }
+                
+                symlink($target, $link);
+                $this->logSystemAction('Link Storage (Fallback)', 'Symlink created manually via symlink() function.');
+                return redirect()->route('admin.settings.index')->with('success', 'Storage link berhasil dibuat (Metode Fallback).');
+            } catch (\Exception $fallbackE) {
+                return redirect()->route('admin.settings.index')->withErrors(['update' => 'Gagal membuat symlink: ' . $e->getMessage() . ' | Fallback error: ' . $fallbackE->getMessage()]);
+            }
+        }
+    }
+
     private function logSystemAction($action, $output)
     {
         $logPath = storage_path('logs/system_updates.log');

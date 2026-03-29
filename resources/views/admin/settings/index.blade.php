@@ -120,6 +120,18 @@
                             Clear Config
                         </span>
                     </button>
+
+                    <div class="border-t border-slate-100 my-4"></div>
+
+                    <form id="linkStorageForm" action="{{ route('admin.settings.link-storage') }}" method="POST">
+                        @csrf
+                    </form>
+                    <button type="button" onclick="confirmAction('linkStorageForm', 'Link Storage?', 'Buat symlink folder public/storage agar gambar (logo, berita, soal) tampil di Shared Hosting?', 'question')" class="w-full flex items-center justify-between px-4 py-3 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 font-semibold text-sm rounded-xl border border-emerald-200 transition cursor-pointer">
+                        <span class="flex items-center gap-2">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"/></svg>
+                            Link Storage (Fix Gambar)
+                        </span>
+                    </button>
                 </div>
             </div>
         </div>
