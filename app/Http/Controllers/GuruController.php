@@ -332,4 +332,145 @@ class GuruController extends Controller
 
         return view('guru.hasil.index', compact('ujians'));
     }
+    // ─── Ujian CRUD (Guru) ───
+    public function ujianIndex()
+    {
+        $guru = auth()->user();
+        $ujians = Ujian::where('guru_id', $guru->id)->with(['mapel'])->withCount('soals')->latest()->get();
+        return view('guru.ujian.index', compact('ujians'));
+    }
+
+    public function ujianCreate()
+    {
+        $guru = auth()->user();
+        $kelasList = \App\Models\Kelas::orderBy('nama_kelas')->get();
+        // Hanya mapel yang diajar oleh guru ini
+        $mapels = $guru->mapels()->orderBy('nama_mapel')->get();
+        $validMapelIds = $mapels->pluck('id')->toArray();
+        // Paket Soal berdasarkan mapel yang diajarkan
+        $paketSoals = \App\Models\PaketSoal::whereIn('mapel_id', $validMapelIds)
+            ->has('soals')->withCount('soals')->with('mapel')->orderBy('judul')->get();
+            
+        return view('guru.ujian.create', compact('kelasList', 'mapels', 'paketSoals'));
+    }
+
+    public function ujianStore(Request $request)
+    {
+        $guru = auth()->user();
+        $validMapelIds = $guru->mapels()->pluck('mapels.id')->toArray();
+
+        $request->validate([
+            'judul' => 'required|string|max:255',
+            'mapel_id' => 'required|in:' . implode(',', $validMapelIds),
+            'paket_soal_id' => 'required|exists:paket_soals,id',
+            'durasi' => 'required|integer|min:1',
+            'kelas' => 'nullable|exists:kelas,nama_kelas',
+        ]);
+
+        Ujian::create([
+            'judul' => $request->judul,
+            'mapel_id' => $request->mapel_id,
+            'guru_id' => $guru->id,
+            'paket_soal_id' => $request->paket_soal_id,
+            'token' => strtoupper(\Illuminate\Support\Str::random(6)),
+            'is_active' => $request->boolean('is_active'),
+            'durasi' => $request->durasi,
+            'kelas' => $request->kelas,
+        ]);
+
+        return redirect()->route('guru.ujian.index')->with('success', 'Ujian berhasil dibuat.');
+    }
+
+    public function ujianShow(Ujian $ujian)
+    {
+        $guru = auth()->user();
+        abort_if($ujian->guru_id !== $guru->id, 403);
+
+        $ujian->load(['soals', 'hasilUjians.siswa']);
+        $totalSoal = $ujian->soals->count();
+
+        // Get students currently taking the exam (have temp answers but no result yet)
+        $finishedSiswaIds = $ujian->hasilUjians->pluck('siswa_id')->toArray();
+
+        $activeSiswa = \App\Models\JawabanSementara::where('ujian_id', $ujian->id)
+            ->whereNotIn('siswa_id', $finishedSiswaIds)
+            ->selectRaw('siswa_id, COUNT(*) as answered_count, MAX(updated_at) as last_activity')
+            ->groupBy('siswa_id')
+            ->with('siswa')
+            ->get();
+
+        return view('guru.ujian.show', compact('ujian', 'totalSoal', 'activeSiswa'));
+    }
+
+    public function ujianEdit(Ujian $ujian)
+    {
+        $guru = auth()->user();
+        abort_if($ujian->guru_id !== $guru->id, 403);
+
+        $kelasList = \App\Models\Kelas::orderBy('nama_kelas')->get();
+        // Hanya mapel yang diajar oleh guru ini
+        $mapels = $guru->mapels()->orderBy('nama_mapel')->get();
+        $validMapelIds = $mapels->pluck('id')->toArray();
+        // Paket Soal berdasarkan mapel yang diajarkan
+        $paketSoals = \App\Models\PaketSoal::whereIn('mapel_id', $validMapelIds)
+            ->has('soals')->withCount('soals')->with('mapel')->orderBy('judul')->get();
+
+        return view('guru.ujian.edit', compact('ujian', 'kelasList', 'mapels', 'paketSoals'));
+    }
+
+    public function ujianUpdate(Request $request, Ujian $ujian)
+    {
+        $guru = auth()->user();
+        abort_if($ujian->guru_id !== $guru->id, 403);
+
+        $validMapelIds = $guru->mapels()->pluck('mapels.id')->toArray();
+
+        $request->validate([
+            'judul' => 'required|string|max:255',
+            'mapel_id' => 'required|in:' . implode(',', $validMapelIds),
+            'paket_soal_id' => 'required|exists:paket_soals,id',
+            'durasi' => 'required|integer|min:1',
+            'kelas' => 'nullable|exists:kelas,nama_kelas',
+        ]);
+
+        $ujian->update([
+            'judul' => $request->judul,
+            'mapel_id' => $request->mapel_id,
+            'paket_soal_id' => $request->paket_soal_id,
+            'is_active' => $request->boolean('is_active'),
+            'durasi' => $request->durasi,
+            'kelas' => $request->kelas,
+        ]);
+
+        return redirect()->route('guru.ujian.index')->with('success', 'Ujian berhasil diperbarui.');
+    }
+
+    public function ujianRegenerateToken(Ujian $ujian)
+    {
+        $guru = auth()->user();
+        abort_if($ujian->guru_id !== $guru->id, 403);
+
+        $ujian->update(['token' => strtoupper(\Illuminate\Support\Str::random(6))]);
+        return redirect()->back()->with('success', 'Token berhasil di-generate ulang: ' . $ujian->token);
+    }
+    
+    public function ujianResetPeserta(Ujian $ujian, \App\Models\Siswa $siswa)
+    {
+        $guru = auth()->user();
+        abort_if($ujian->guru_id !== $guru->id, 403);
+
+        // Clear login flag only, so they can login again but keep their answers/session
+        $siswa->update(['is_logged_in' => false]);
+
+        return redirect()->back()->with('success', 'Sesi login peserta ' . $siswa->name . ' berhasil di-reset. Jawaban tetap aman.');
+    }
+
+    public function ujianDestroy(Ujian $ujian)
+    {
+        $guru = auth()->user();
+        abort_if($ujian->guru_id !== $guru->id, 403);
+
+        $ujian->delete();
+        return redirect()->route('guru.ujian.index')->with('success', 'Ujian berhasil dihapus.');
+    }
 }

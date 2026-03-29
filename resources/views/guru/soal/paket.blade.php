@@ -18,21 +18,19 @@
     
     <div class="flex items-center gap-2">
         @if($soals->count() > 0)
-        <form id="empty-form" action="{{ route('guru.soal.empty') }}" method="POST" class="inline">
+        <form id="empty-form" action="{{ route('guru.soal.empty', $paket_soal->id) }}" method="POST" class="inline">
             @csrf @method('DELETE')
-            <input type="hidden" name="mapel_id" value="{{ $mapel->id }}">
-            <input type="hidden" name="kelas" value="{{ $kelas }}">
             <button type="button" onclick="confirmAction('empty-form', 'Kosongkan Semua Soal?', 'Peringatan: Menghapus semua soal di halaman ini bersifat permanen.')" class="inline-flex items-center gap-2 px-4 py-2 bg-red-600 text-white text-sm font-semibold rounded-xl hover:bg-red-700 transition shadow-lg shadow-red-500/25">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
                 Kosongkan
             </button>
         </form>
         @endif
-        <a href="{{ route('guru.soal.import.form', ['mapel_id' => $mapel->id, 'kelas' => $kelas]) }}" class="inline-flex items-center gap-2 px-4 py-2 bg-emerald-600 text-white text-sm font-semibold rounded-xl hover:bg-emerald-700 transition shadow-lg shadow-emerald-500/25">
+        <a href="{{ route('guru.soal.import.form', $paket_soal->id) }}" class="inline-flex items-center gap-2 px-4 py-2 bg-emerald-600 text-white text-sm font-semibold rounded-xl hover:bg-emerald-700 transition shadow-lg shadow-emerald-500/25">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
             Import Soal
         </a>
-        <a href="{{ route('guru.soal.create', ['mapel_id' => $mapel->id, 'kelas' => $kelas]) }}" class="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 text-white text-sm font-semibold rounded-xl hover:from-blue-700 hover:to-indigo-700 transition shadow-lg shadow-blue-500/25">
+        <a href="{{ route('guru.soal.create', $paket_soal->id) }}" class="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 text-white text-sm font-semibold rounded-xl hover:from-blue-700 hover:to-indigo-700 transition shadow-lg shadow-blue-500/25">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
             Tambah Soal Spesifik
         </a>

@@ -116,6 +116,17 @@ Route::prefix('guru')->name('guru.')->middleware(['auth', 'role:guru'])->group(f
     Route::delete('/soal/paket/{paket_soal}/empty', [GuruController::class, 'soalEmpty'])->name('soal.empty');
     Route::delete('/soal/{soal}', [GuruController::class, 'soalDestroy'])->name('soal.destroy');
 
+    // Ujian Management (Guru)
+    Route::get('/ujian', [GuruController::class, 'ujianIndex'])->name('ujian.index');
+    Route::get('/ujian/create', [GuruController::class, 'ujianCreate'])->name('ujian.create');
+    Route::post('/ujian', [GuruController::class, 'ujianStore'])->name('ujian.store');
+    Route::get('/ujian/{ujian}', [GuruController::class, 'ujianShow'])->name('ujian.show');
+    Route::get('/ujian/{ujian}/edit', [GuruController::class, 'ujianEdit'])->name('ujian.edit');
+    Route::put('/ujian/{ujian}', [GuruController::class, 'ujianUpdate'])->name('ujian.update');
+    Route::post('/ujian/{ujian}/regenerate-token', [GuruController::class, 'ujianRegenerateToken'])->name('ujian.regenerate-token');
+    Route::post('/ujian/{ujian}/reset-peserta/{siswa}', [GuruController::class, 'ujianResetPeserta'])->name('ujian.reset-peserta');
+    Route::delete('/ujian/{ujian}', [GuruController::class, 'ujianDestroy'])->name('ujian.destroy');
+
     // Hasil Ujian (View Only)
     Route::get('/hasil', [GuruController::class, 'hasilIndex'])->name('hasil.index');
 });
