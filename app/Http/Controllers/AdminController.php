@@ -105,6 +105,12 @@ class AdminController extends Controller
         return view('admin.siswa.index', compact('siswas'));
     }
 
+    public function siswaAktifIndex()
+    {
+        $activeSiswas = Siswa::where('is_logged_in', true)->latest()->get();
+        return view('admin.siswa.aktif', compact('activeSiswas'));
+    }
+
     public function siswaCreate()
     {
         $kelasList = \App\Models\Kelas::orderBy('nama_kelas')->get();
@@ -151,6 +157,12 @@ class AdminController extends Controller
     {
         $siswa->delete();
         return redirect()->route('admin.siswa.index')->with('success', 'Siswa berhasil dihapus.');
+    }
+
+    public function siswaKick(Siswa $siswa)
+    {
+        $siswa->update(['is_logged_in' => false]);
+        return redirect()->back()->with('success', 'Siswa ' . $siswa->name . ' berhasil di-kick dari sesinya.');
     }
 
     public function siswaImportForm()
@@ -257,7 +269,8 @@ class AdminController extends Controller
         $gurus = User::where('role', 'guru')->get();
         $kelasList = \App\Models\Kelas::orderBy('nama_kelas')->get();
         $mapels = \App\Models\Mapel::orderBy('nama_mapel')->get();
-        return view('admin.ujian.create', compact('gurus', 'kelasList', 'mapels'));
+        $paketSoals = \App\Models\PaketSoal::has('soals')->withCount('soals')->with('mapel')->orderBy('judul')->get();
+        return view('admin.ujian.create', compact('gurus', 'kelasList', 'mapels', 'paketSoals'));
     }
 
     public function ujianStore(Request $request)
@@ -266,6 +279,7 @@ class AdminController extends Controller
             'judul' => 'required|string|max:255',
             'mapel_id' => 'required|exists:mapels,id',
             'guru_id' => 'required|exists:users,id',
+            'paket_soal_id' => 'required|exists:paket_soals,id',
             'durasi' => 'required|integer|min:1',
             'kelas' => 'nullable|exists:kelas,nama_kelas',
         ]);
@@ -274,6 +288,7 @@ class AdminController extends Controller
             'judul' => $request->judul,
             'mapel_id' => $request->mapel_id,
             'guru_id' => $request->guru_id,
+            'paket_soal_id' => $request->paket_soal_id,
             'token' => strtoupper(Str::random(6)),
             'is_active' => $request->boolean('is_active'),
             'durasi' => $request->durasi,
@@ -306,7 +321,8 @@ class AdminController extends Controller
         $gurus = User::where('role', 'guru')->get();
         $kelasList = \App\Models\Kelas::orderBy('nama_kelas')->get();
         $mapels = \App\Models\Mapel::orderBy('nama_mapel')->get();
-        return view('admin.ujian.edit', compact('ujian', 'gurus', 'kelasList', 'mapels'));
+        $paketSoals = \App\Models\PaketSoal::has('soals')->withCount('soals')->with('mapel')->orderBy('judul')->get();
+        return view('admin.ujian.edit', compact('ujian', 'gurus', 'kelasList', 'mapels', 'paketSoals'));
     }
 
     public function ujianUpdate(Request $request, Ujian $ujian)
@@ -315,6 +331,7 @@ class AdminController extends Controller
             'judul' => 'required|string|max:255',
             'mapel_id' => 'required|exists:mapels,id',
             'guru_id' => 'required|exists:users,id',
+            'paket_soal_id' => 'required|exists:paket_soals,id',
             'durasi' => 'required|integer|min:1',
             'kelas' => 'nullable|exists:kelas,nama_kelas',
         ]);
@@ -323,6 +340,7 @@ class AdminController extends Controller
             'judul' => $request->judul,
             'mapel_id' => $request->mapel_id,
             'guru_id' => $request->guru_id,
+            'paket_soal_id' => $request->paket_soal_id,
             'is_active' => $request->boolean('is_active'),
             'durasi' => $request->durasi,
             'kelas' => $request->kelas,
@@ -335,6 +353,13 @@ class AdminController extends Controller
     {
         $ujian->update(['token' => strtoupper(Str::random(6))]);
         return redirect()->back()->with('success', 'Token berhasil di-generate ulang: ' . $ujian->token);
+    }
+    public function ujianResetPeserta(Ujian $ujian, Siswa $siswa)
+    {
+        // Clear login flag only, so they can login again but keep their answers/session
+        $siswa->update(['is_logged_in' => false]);
+
+        return redirect()->back()->with('success', 'Sesi login peserta ' . $siswa->name . ' berhasil di-reset. Jawaban tetap aman.');
     }
 
     public function ujianDestroy(Ujian $ujian)

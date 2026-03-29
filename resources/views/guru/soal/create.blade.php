@@ -18,25 +18,9 @@
                     </select>
                 </div>
                 
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                        <label class="block text-sm font-semibold text-slate-700 mb-1.5">Mata Pelajaran (Hanya yang Diampu)</label>
-                        <select name="mapel_id" required class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition outline-none">
-                            <option value="">Pilih Mata Pelajaran...</option>
-                            @foreach($mapels as $mapel)
-                                <option value="{{ $mapel->id }}" {{ old('mapel_id', request('mapel_id')) == $mapel->id ? 'selected' : '' }}>{{ $mapel->nama_mapel }}</option>
-                            @endforeach
-                        </select>
-                    </div>
-                    <div>
-                        <label class="block text-sm font-semibold text-slate-700 mb-1.5">Kelas</label>
-                        <select name="kelas" required class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition outline-none">
-                            <option value="">Pilih Kelas...</option>
-                            @foreach($kelasList as $k)
-                                <option value="{{ $k->nama_kelas }}" {{ old('kelas', request('kelas')) == $k->nama_kelas ? 'selected' : '' }}>{{ $k->nama_kelas }}</option>
-                            @endforeach
-                        </select>
-                    </div>
+                <input type="hidden" name="paket_soal_id" value="{{ $paket_soal->id }}">
+                <div class="p-4 bg-blue-50/50 border border-blue-100 rounded-xl mb-6">
+                    <p class="text-sm text-blue-800 font-medium">Menambahkan soal ke klasifikasi: <span class="font-bold">{{ $paket_soal->judul }}</span></p>
                 </div>
 
                 {{-- Soal --}}
@@ -76,7 +60,7 @@
 
                 <div class="flex items-center gap-3 pt-2">
                     <button type="submit" class="px-6 py-2.5 bg-gradient-to-r from-blue-600 to-indigo-600 text-white text-sm font-semibold rounded-xl hover:from-blue-700 hover:to-indigo-700 transition shadow-lg shadow-blue-500/25">Simpan Soal</button>
-                    <a href="{{ route('guru.soal.index') }}" class="px-6 py-2.5 bg-slate-100 text-slate-600 text-sm font-semibold rounded-xl hover:bg-slate-200 transition">Batal</a>
+                    <a href="{{ route('guru.soal.paket', $paket_soal->id) }}" class="px-6 py-2.5 bg-slate-100 text-slate-600 text-sm font-semibold rounded-xl hover:bg-slate-200 transition">Batal</a>
                 </div>
             </form>
         </div>

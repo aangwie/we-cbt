@@ -6,8 +6,11 @@ use Illuminate\Http\Request;
 use App\Models\Ujian;
 use App\Models\Soal;
 use App\Models\HasilUjian;
+use App\Models\PaketSoal;
 use Illuminate\Support\Facades\Storage;
 use App\Helpers\ImageHelper;
+use App\Imports\SoalImport;
+use Maatwebsite\Excel\Facades\Excel;
 
 class GuruController extends Controller
 {
@@ -26,19 +29,20 @@ class GuruController extends Controller
     public function soalIndex()
     {
         $guru = auth()->user();
-        $validMapels = $guru->mapels()->pluck('mapels.id')->toArray();
+        $validMapelIds = $guru->mapels()->pluck('mapels.id')->toArray();
 
-        // Get grouped mapel and kelas summaries for authorized mapels
-        $summaries = \Illuminate\Support\Facades\DB::table('soals')
-            ->join('mapels', 'soals.mapel_id', '=', 'mapels.id')
-            ->whereIn('mapels.id', $validMapels)
-            ->select('mapels.id as mapel_id', 'mapels.nama_mapel', 'mapels.kode_mapel', 'soals.kelas', \Illuminate\Support\Facades\DB::raw('count(*) as total_soal'))
-            ->groupBy('mapels.id', 'mapels.nama_mapel', 'mapels.kode_mapel', 'soals.kelas')
-            ->orderBy('mapels.nama_mapel')
-            ->orderBy('soals.kelas')
+        $mapels = $guru->mapels()->orderBy('nama_mapel')->get();
+        $kelasList = \App\Models\Kelas::orderBy('nama_kelas')->get();
+
+        $mapelKelas = PaketSoal::with('mapel')
+            ->whereIn('mapel_id', $validMapelIds)
+            ->select('mapel_id', 'kelas')
+            ->selectRaw('COUNT(*) as paket_count')
+            ->selectRaw('(SELECT COUNT(*) FROM soals WHERE soals.paket_soal_id IN (SELECT id FROM paket_soals AS ps WHERE ps.mapel_id = paket_soals.mapel_id AND ps.kelas = paket_soals.kelas)) as soal_count')
+            ->groupBy('mapel_id', 'kelas')
             ->get();
 
-        return view('guru.soal.index', compact('summaries'));
+        return view('guru.soal.index', compact('mapels', 'kelasList', 'mapelKelas'));
     }
 
     public function soalDetail(Request $request)
@@ -52,21 +56,117 @@ class GuruController extends Controller
         abort_if(!$mapel_id || !$kelas || !in_array($mapel_id, $validMapels), 404);
 
         $mapel = \App\Models\Mapel::findOrFail($mapel_id);
-        $soals = Soal::where('mapel_id', $mapel_id)
+        $pakets = PaketSoal::where('mapel_id', $mapel_id)
             ->where('kelas', $kelas)
-            ->with('ujian')
+            ->withCount('soals')
             ->get();
 
-        return view('guru.soal.detail', compact('mapel', 'kelas', 'soals'));
+        return view('guru.soal.detail', compact('mapel', 'kelas', 'pakets'));
     }
 
-    public function soalCreate()
+    public function soalStorePaket(Request $request)
+    {
+        $guru = auth()->user();
+        $validMapels = $guru->mapels()->pluck('mapels.id')->toArray();
+
+        $data = $request->validate([
+            'mapel_id' => 'required|in:' . implode(',', $validMapels),
+            'kelas' => 'required|string',
+            'judul' => 'required|string|max:255',
+            'deskripsi' => 'nullable|string',
+        ]);
+        PaketSoal::create($data);
+        return redirect()->back()->with('success', 'Klasifikasi soal berhasil ditambahkan.');
+    }
+
+    public function soalUpdatePaket(Request $request, PaketSoal $paket_soal)
+    {
+        $guru = auth()->user();
+        $validMapels = $guru->mapels()->pluck('mapels.id')->toArray();
+        abort_if(!in_array($paket_soal->mapel_id, $validMapels), 403);
+
+        $data = $request->validate([
+            'judul' => 'required|string|max:255',
+            'deskripsi' => 'nullable|string',
+        ]);
+        $paket_soal->update($data);
+        return redirect()->back()->with('success', 'Klasifikasi soal berhasil diperbarui.');
+    }
+
+    public function soalDestroyPaket(PaketSoal $paket_soal)
+    {
+        $soals = $paket_soal->soals;
+        $imageFields = ['gambar_soal', 'gambar_a', 'gambar_b', 'gambar_c', 'gambar_d', 'gambar_e'];
+        foreach ($soals as $soal) {
+            foreach ($imageFields as $field) {
+                if ($soal->$field) Storage::disk('public')->delete($soal->$field);
+            }
+            $soal->delete();
+        }
+        $paket_soal->delete();
+        return redirect()->back()->with('success', 'Klasifikasi soal berhasil dihapus.');
+    }
+
+    public function soalPaket(PaketSoal $paket_soal)
+    {
+        $mapel = $paket_soal->mapel;
+        $kelas = $paket_soal->kelas;
+        $soals = $paket_soal->soals()->with('ujian')->latest()->get();
+
+        return view('guru.soal.paket', compact('paket_soal', 'mapel', 'kelas', 'soals'));
+    }
+
+    public function soalImportForm(PaketSoal $paket_soal)
+    {
+        return view('guru.soal.import', compact('paket_soal'));
+    }
+
+    public function soalImport(Request $request, PaketSoal $paket_soal)
+    {
+        $request->validate([
+            'file_excel' => 'required|mimes:xlsx,xls,csv|max:5120',
+        ]);
+
+        try {
+            $import = new SoalImport($paket_soal);
+            Excel::import($import, $request->file('file_excel'));
+
+            return response()->json([
+                'status' => 'success',
+                'success_count' => $import->successCount,
+                'failed_count' => $import->failedCount,
+                'errors' => $import->errors
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Gagal mengimport soal: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    public function soalTemplate()
+    {
+        $export = new class implements \Maatwebsite\Excel\Concerns\FromArray, \Maatwebsite\Excel\Concerns\WithHeadings {
+            public function headings(): array {
+                return ['teks_soal', 'pilihan_a', 'pilihan_b', 'pilihan_c', 'pilihan_d', 'pilihan_e', 'jawaban_benar'];
+            }
+            public function array(): array {
+                return [
+                    ['Siapakah penemu bola lampu?', 'Thomas Edison', 'Albert Einstein', 'Isaac Newton', 'Nikola Tesla', 'Galileo Galilei', 'A'],
+                ];
+            }
+        };
+        return Excel::download($export, 'template_soal.xlsx');
+    }
+
+    public function soalCreate(PaketSoal $paket_soal)
     {
         $guru = auth()->user();
         $ujians = Ujian::where('guru_id', $guru->id)->get();
         $mapels = $guru->mapels()->orderBy('nama_mapel')->get();
         $kelasList = \App\Models\Kelas::orderBy('nama_kelas')->get();
-        return view('guru.soal.create', compact('ujians', 'mapels', 'kelasList'));
+        return view('guru.soal.create', compact('paket_soal', 'ujians', 'mapels', 'kelasList'));
     }
 
     public function soalStore(Request $request)
@@ -76,8 +176,7 @@ class GuruController extends Controller
         $validMapels = $guru->mapels()->pluck('mapels.id')->toArray();
         $request->validate([
             'ujian_id' => 'required|exists:ujians,id',
-            'mapel_id' => 'required|in:' . implode(',', $validMapels),
-            'kelas' => 'required|exists:kelas,nama_kelas',
+            'paket_soal_id' => 'required|exists:paket_soals,id',
             'teks_soal' => 'required|string',
             'gambar_soal' => 'nullable|image|max:500',
             'pilihan_a' => 'required|string',
@@ -97,7 +196,7 @@ class GuruController extends Controller
         $ujian = Ujian::where('id', $request->ujian_id)->where('guru_id', $guru->id)->firstOrFail();
 
         $data = $request->only([
-            'ujian_id', 'mapel_id', 'kelas', 'teks_soal',
+            'ujian_id', 'paket_soal_id', 'teks_soal',
             'pilihan_a', 'pilihan_b', 'pilihan_c', 'pilihan_d', 'pilihan_e',
             'jawaban_benar',
         ]);
@@ -110,12 +209,13 @@ class GuruController extends Controller
             }
         }
 
+        $paket = PaketSoal::findOrFail($data['paket_soal_id']);
+        $data['mapel_id'] = $paket->mapel_id;
+        $data['kelas'] = $paket->kelas;
+
         Soal::create($data);
 
-        return redirect()->route('guru.soal.detail', [
-            'mapel_id' => $data['mapel_id'],
-            'kelas' => $data['kelas']
-        ])->with('success', 'Soal berhasil ditambahkan.');
+        return redirect()->route('guru.soal.paket', $paket->id)->with('success', 'Soal berhasil ditambahkan.');
     }
 
     public function soalEdit(Soal $soal)
@@ -138,8 +238,7 @@ class GuruController extends Controller
         $validMapels = $guru->mapels()->pluck('mapels.id')->toArray();
         $request->validate([
             'ujian_id' => 'required|exists:ujians,id',
-            'mapel_id' => 'required|in:' . implode(',', $validMapels),
-            'kelas' => 'required|exists:kelas,nama_kelas',
+            'paket_soal_id' => 'required|exists:paket_soals,id',
             'teks_soal' => 'required|string',
             'gambar_soal' => 'nullable|image|max:500',
             'pilihan_a' => 'required|string',
@@ -156,7 +255,7 @@ class GuruController extends Controller
         ]);
 
         $data = $request->only([
-            'ujian_id', 'mapel_id', 'kelas', 'teks_soal',
+            'ujian_id', 'paket_soal_id', 'teks_soal',
             'pilihan_a', 'pilihan_b', 'pilihan_c', 'pilihan_d', 'pilihan_e',
             'jawaban_benar',
         ]);
@@ -172,12 +271,13 @@ class GuruController extends Controller
             }
         }
 
+        $paket = PaketSoal::findOrFail($data['paket_soal_id']);
+        $data['mapel_id'] = $paket->mapel_id;
+        $data['kelas'] = $paket->kelas;
+
         $soal->update($data);
 
-        return redirect()->route('guru.soal.detail', [
-            'mapel_id' => $data['mapel_id'],
-            'kelas' => $data['kelas']
-        ])->with('success', 'Soal berhasil diperbarui.');
+        return redirect()->route('guru.soal.paket', $soal->paket_soal_id)->with('success', 'Soal berhasil diperbarui.');
     }
 
     public function soalDestroy(Soal $soal)
@@ -185,8 +285,7 @@ class GuruController extends Controller
         $guru = auth()->user();
         Ujian::where('id', $soal->ujian_id)->where('guru_id', $guru->id)->firstOrFail();
 
-        $mapel_id = $soal->mapel_id;
-        $kelas = $soal->kelas;
+        $paket_soal_id = $soal->paket_soal_id;
 
         // Delete associated images
         $imageFields = ['gambar_soal', 'gambar_a', 'gambar_b', 'gambar_c', 'gambar_d', 'gambar_e'];
@@ -198,10 +297,28 @@ class GuruController extends Controller
 
         $soal->delete();
 
-        return redirect()->route('guru.soal.detail', [
-            'mapel_id' => $mapel_id,
-            'kelas' => $kelas
-        ])->with('success', 'Soal berhasil dihapus.');
+        return redirect()->route('guru.soal.paket', $paket_soal_id)->with('success', 'Soal berhasil dihapus.');
+    }
+
+    public function soalEmpty(PaketSoal $paket_soal)
+    {
+        $guru = auth()->user();
+        $validMapels = $guru->mapels()->pluck('mapels.id')->toArray();
+        abort_if(!in_array($paket_soal->mapel_id, $validMapels), 404);
+
+        $soals = $paket_soal->soals;
+        $imageFields = ['gambar_soal', 'gambar_a', 'gambar_b', 'gambar_c', 'gambar_d', 'gambar_e'];
+        
+        foreach ($soals as $soal) {
+            foreach ($imageFields as $field) {
+                if ($soal->{$field}) {
+                    Storage::disk('public')->delete($soal->{$field});
+                }
+            }
+            $soal->delete();
+        }
+
+        return redirect()->route('guru.soal.paket', $paket_soal->id)->with('success', 'Semua soal berhasil dikosongkan.');
     }
 
     // ─── Hasil Ujian (View Only) ───

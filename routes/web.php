@@ -26,6 +26,7 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'role:admin'])->grou
 
     // Siswa Management
     Route::get('/siswa', [AdminController::class, 'siswaIndex'])->name('siswa.index');
+    Route::get('/siswa/aktif', [AdminController::class, 'siswaAktifIndex'])->name('siswa.aktif');
     Route::get('/siswa/create', [AdminController::class, 'siswaCreate'])->name('siswa.create');
     Route::post('/siswa', [AdminController::class, 'siswaStore'])->name('siswa.store');
     Route::get('/siswa/import', [AdminController::class, 'siswaImportForm'])->name('siswa.import.form');
@@ -34,6 +35,7 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'role:admin'])->grou
     Route::get('/siswa/{siswa}/edit', [AdminController::class, 'siswaEdit'])->name('siswa.edit');
     Route::put('/siswa/{siswa}', [AdminController::class, 'siswaUpdate'])->name('siswa.update');
     Route::delete('/siswa/{siswa}', [AdminController::class, 'siswaDestroy'])->name('siswa.destroy');
+    Route::post('/siswa/{siswa}/kick', [AdminController::class, 'siswaKick'])->name('siswa.kick');
 
     // Ujian Management
     Route::get('/ujian', [AdminController::class, 'ujianIndex'])->name('ujian.index');
@@ -43,15 +45,24 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'role:admin'])->grou
     Route::get('/ujian/{ujian}/edit', [AdminController::class, 'ujianEdit'])->name('ujian.edit');
     Route::put('/ujian/{ujian}', [AdminController::class, 'ujianUpdate'])->name('ujian.update');
     Route::post('/ujian/{ujian}/regenerate-token', [AdminController::class, 'ujianRegenerateToken'])->name('ujian.regenerate-token');
+    Route::post('/ujian/{ujian}/reset-peserta/{siswa}', [AdminController::class, 'ujianResetPeserta'])->name('ujian.reset-peserta');
     Route::delete('/ujian/{ujian}', [AdminController::class, 'ujianDestroy'])->name('ujian.destroy');
 
     // Soal Management (Admin)
     Route::get('/soal', [AdminSoalController::class, 'index'])->name('soal.index');
     Route::get('/soal/detail', [AdminSoalController::class, 'detail'])->name('soal.detail');
-    Route::get('/soal/create', [AdminSoalController::class, 'create'])->name('soal.create');
+    Route::post('/soal/paket', [AdminSoalController::class, 'storePaket'])->name('soal.paket.store');
+    Route::put('/soal/paket/{paket_soal}', [AdminSoalController::class, 'updatePaket'])->name('soal.paket.update');
+    Route::delete('/soal/paket/{paket_soal}', [AdminSoalController::class, 'destroyPaket'])->name('soal.paket.destroy');
+    Route::get('/soal/paket/{paket_soal}', [AdminSoalController::class, 'paket'])->name('soal.paket');
+    Route::get('/soal/paket/{paket_soal}/import', [AdminSoalController::class, 'importForm'])->name('soal.import.form');
+    Route::post('/soal/paket/{paket_soal}/import', [AdminSoalController::class, 'import'])->name('soal.import');
+    Route::get('/soal/template', [AdminSoalController::class, 'template'])->name('soal.template');
+    Route::get('/soal/paket/{paket_soal}/create', [AdminSoalController::class, 'create'])->name('soal.create');
     Route::post('/soal', [AdminSoalController::class, 'store'])->name('soal.store');
     Route::get('/soal/{soal}/edit', [AdminSoalController::class, 'edit'])->name('soal.edit');
     Route::put('/soal/{soal}', [AdminSoalController::class, 'update'])->name('soal.update');
+    Route::delete('/soal/paket/{paket_soal}/empty', [AdminSoalController::class, 'empty'])->name('soal.empty');
     Route::delete('/soal/{soal}', [AdminSoalController::class, 'destroy'])->name('soal.destroy');
 
     // Hasil Management (Admin)
@@ -91,10 +102,18 @@ Route::prefix('guru')->name('guru.')->middleware(['auth', 'role:guru'])->group(f
     // Soal Management
     Route::get('/soal', [GuruController::class, 'soalIndex'])->name('soal.index');
     Route::get('/soal/detail', [GuruController::class, 'soalDetail'])->name('soal.detail');
-    Route::get('/soal/create', [GuruController::class, 'soalCreate'])->name('soal.create');
+    Route::post('/soal/paket', [GuruController::class, 'soalStorePaket'])->name('soal.paket.store');
+    Route::put('/soal/paket/{paket_soal}', [GuruController::class, 'soalUpdatePaket'])->name('soal.paket.update');
+    Route::delete('/soal/paket/{paket_soal}', [GuruController::class, 'soalDestroyPaket'])->name('soal.paket.destroy');
+    Route::get('/soal/paket/{paket_soal}', [GuruController::class, 'soalPaket'])->name('soal.paket');
+    Route::get('/soal/paket/{paket_soal}/import', [GuruController::class, 'soalImportForm'])->name('soal.import.form');
+    Route::post('/soal/paket/{paket_soal}/import', [GuruController::class, 'soalImport'])->name('soal.import');
+    Route::get('/soal/template', [GuruController::class, 'soalTemplate'])->name('soal.template');
+    Route::get('/soal/paket/{paket_soal}/create', [GuruController::class, 'soalCreate'])->name('soal.create');
     Route::post('/soal', [GuruController::class, 'soalStore'])->name('soal.store');
     Route::get('/soal/{soal}/edit', [GuruController::class, 'soalEdit'])->name('soal.edit');
     Route::put('/soal/{soal}', [GuruController::class, 'soalUpdate'])->name('soal.update');
+    Route::delete('/soal/paket/{paket_soal}/empty', [GuruController::class, 'soalEmpty'])->name('soal.empty');
     Route::delete('/soal/{soal}', [GuruController::class, 'soalDestroy'])->name('soal.destroy');
 
     // Hasil Ujian (View Only)

@@ -8,6 +8,7 @@ class Soal extends Model
 {
     protected $fillable = [
         'ujian_id',
+        'paket_soal_id',
         'mapel_id',
         'kelas',
         'teks_soal',
@@ -33,5 +34,10 @@ class Soal extends Model
     public function mapel()
     {
         return $this->belongsTo(Mapel::class);
+    }
+
+    public function paketSoal()
+    {
+        return $this->belongsTo(PaketSoal::class);
     }
 }

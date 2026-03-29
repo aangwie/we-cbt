@@ -5,31 +5,38 @@
 </a>
 <a href="{{ route('admin.guru.index') }}" title="Kelola Guru" :class="sidebarMinimized ? 'justify-center px-2' : 'gap-3 px-4'" class="flex items-center py-2.5 rounded-xl {{ request()->routeIs('admin.guru.*') ? 'bg-white/10 text-white font-medium' : 'text-slate-300 hover:bg-white/10 hover:text-white' }} text-sm transition">
     <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
-    <span x-show="!sidebarMinimized" x-transition.opacity class="whitespace-nowrap">Kelola Guru</span>
+    <span x-show="!sidebarMinimized" x-transition.opacity class="whitespace-nowrap">Guru</span>
 </a>
-<a href="{{ route('admin.siswa.index') }}" title="Kelola Siswa" :class="sidebarMinimized ? 'justify-center px-2' : 'gap-3 px-4'" class="flex items-center py-2.5 rounded-xl {{ request()->routeIs('admin.siswa.*') ? 'bg-white/10 text-white font-medium' : 'text-slate-300 hover:bg-white/10 hover:text-white' }} text-sm transition">
+<a href="{{ route('admin.siswa.index') }}" title="Kelola Siswa" :class="sidebarMinimized ? 'justify-center px-2' : 'gap-3 px-4'" class="flex items-center py-2.5 rounded-xl {{ request()->routeIs('admin.siswa.index') || request()->routeIs('admin.siswa.create') || request()->routeIs('admin.siswa.edit') ? 'bg-white/10 text-white font-medium' : 'text-slate-300 hover:bg-white/10 hover:text-white' }} text-sm transition">
     <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
-    <span x-show="!sidebarMinimized" x-transition.opacity class="whitespace-nowrap">Kelola Siswa</span>
+    <span x-show="!sidebarMinimized" x-transition.opacity class="whitespace-nowrap">Siswa</span>
+</a>
+<a href="{{ route('admin.siswa.aktif') }}" title="Siswa Aktif" :class="sidebarMinimized ? 'justify-center px-2' : 'gap-3 px-4'" class="flex items-center py-2.5 rounded-xl {{ request()->routeIs('admin.siswa.aktif') ? 'bg-white/10 text-white font-medium shadow-sm ring-1 ring-white/10' : 'text-slate-300 hover:bg-white/5 hover:text-white' }} text-sm transition">
+    <div class="relative flex items-center justify-center shrink-0">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+        <div class="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 bg-emerald-500 rounded-full border-2 border-slate-900 shadow-[0_0_8px_rgba(16,185,129,0.5)]"></div>
+    </div>
+    <span x-show="!sidebarMinimized" x-transition.opacity class="whitespace-nowrap">Siswa Aktif</span>
 </a>
 <a href="{{ route('admin.kelas.index') }}" title="Kelola Kelas" :class="sidebarMinimized ? 'justify-center px-2' : 'gap-3 px-4'" class="flex items-center py-2.5 rounded-xl transition-all duration-200 {{ request()->routeIs('admin.kelas.*') ? 'bg-white/10 text-white font-medium shadow-sm' : 'text-slate-300 hover:bg-white/5 hover:text-white' }}">
     <svg class="w-5 h-5 shrink-0 opacity-75" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m3-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
-    <span x-show="!sidebarMinimized" x-transition.opacity class="whitespace-nowrap">Kelola Kelas</span>
+    <span x-show="!sidebarMinimized" x-transition.opacity class="whitespace-nowrap">Kelas</span>
 </a>
 <a href="{{ route('admin.mapel.index') }}" title="Kelola Mapel" :class="sidebarMinimized ? 'justify-center px-2' : 'gap-3 px-4'" class="flex items-center py-2.5 rounded-xl transition-all duration-200 {{ request()->routeIs('admin.mapel.*') ? 'bg-white/10 text-white font-medium shadow-sm' : 'text-slate-300 hover:bg-white/5 hover:text-white' }}">
     <svg class="w-5 h-5 shrink-0 opacity-75" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg>
-    <span x-show="!sidebarMinimized" x-transition.opacity class="whitespace-nowrap">Kelola Mapel</span>
+    <span x-show="!sidebarMinimized" x-transition.opacity class="whitespace-nowrap">Mapel</span>
 </a>
 <a href="{{ route('admin.ujian.index') }}" title="Kelola Ujian" :class="sidebarMinimized ? 'justify-center px-2' : 'gap-3 px-4'" class="flex items-center py-2.5 rounded-xl {{ request()->routeIs('admin.ujian.*') ? 'bg-white/10 text-white font-medium' : 'text-slate-300 hover:bg-white/10 hover:text-white' }} text-sm transition">
     <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
-    <span x-show="!sidebarMinimized" x-transition.opacity class="whitespace-nowrap">Kelola Ujian</span>
+    <span x-show="!sidebarMinimized" x-transition.opacity class="whitespace-nowrap">Ujian</span>
 </a>
 <a href="{{ route('admin.soal.index') }}" title="Kelola Soal" :class="sidebarMinimized ? 'justify-center px-2' : 'gap-3 px-4'" class="flex items-center py-2.5 rounded-xl {{ request()->routeIs('admin.soal.*') ? 'bg-white/10 text-white font-medium' : 'text-slate-300 hover:bg-white/10 hover:text-white' }} text-sm transition">
     <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-    <span x-show="!sidebarMinimized" x-transition.opacity class="whitespace-nowrap">Kelola Soal</span>
+    <span x-show="!sidebarMinimized" x-transition.opacity class="whitespace-nowrap">Soal</span>
 </a>
 <a href="{{ route('admin.hasil.index') }}" title="Kelola Hasil" :class="sidebarMinimized ? 'justify-center px-2' : 'gap-3 px-4'" class="flex items-center py-2.5 rounded-xl {{ request()->routeIs('admin.hasil.*') ? 'bg-white/10 text-white font-medium' : 'text-slate-300 hover:bg-white/10 hover:text-white' }} text-sm transition">
     <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
-    <span x-show="!sidebarMinimized" x-transition.opacity class="whitespace-nowrap">Kelola Hasil</span>
+    <span x-show="!sidebarMinimized" x-transition.opacity class="whitespace-nowrap">Hasil</span>
 </a>
 
 <div class="my-4 border-t border-white/10"></div>

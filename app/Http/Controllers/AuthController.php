@@ -59,6 +59,14 @@ class AuthController extends Controller
             return back()->withErrors(['nisn' => 'NISN atau password salah.'])->withInput($request->only('nisn', 'login_type'));
         }
 
+        // Check if siswa already has an active login session
+        if ($siswa->is_logged_in) {
+            return back()->withErrors(['nisn' => 'Siswa Masih Aktif, Mohon Logout Terlebih Dahulu'])->withInput($request->only('nisn', 'login_type'));
+        }
+
+        // Mark as logged in
+        $siswa->update(['is_logged_in' => true]);
+
         session([
             'siswa_id' => $siswa->id,
             'siswa_name' => $siswa->name,
@@ -71,6 +79,11 @@ class AuthController extends Controller
 
     public function logout(Request $request)
     {
+        // Clear siswa login flag before session is destroyed
+        if (session()->has('siswa_id')) {
+            Siswa::where('id', session('siswa_id'))->update(['is_logged_in' => false]);
+        }
+
         if (Auth::check()) {
             Auth::logout();
         }
