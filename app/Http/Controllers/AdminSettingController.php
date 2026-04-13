@@ -7,6 +7,8 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\Schema;
+use Illuminate\Database\Schema\Blueprint;
 
 class AdminSettingController extends Controller
 {
@@ -200,8 +202,20 @@ class AdminSettingController extends Controller
     }
 
     // ─── SEB (Safe Exam Browser) Settings ───
+    private function ensureSebColumnsExist()
+    {
+        if (!Schema::hasColumn('settings', 'seb_enabled')) {
+            Schema::table('settings', function (Blueprint $table) {
+                $table->boolean('seb_enabled')->default(false);
+                $table->string('seb_key', 64)->nullable();
+            });
+        }
+    }
+
     public function sebIndex()
     {
+        $this->ensureSebColumnsExist();
+
         $setting = Setting::firstOrCreate(['id' => 1], [
             'app_name' => 'WeTest CBT',
         ]);
@@ -211,6 +225,8 @@ class AdminSettingController extends Controller
 
     public function sebUpdate(Request $request)
     {
+        $this->ensureSebColumnsExist();
+
         $setting = Setting::firstOrCreate(['id' => 1]);
 
         $validated = $request->validate([
