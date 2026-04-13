@@ -70,14 +70,52 @@ class AdminSettingController extends Controller
     public function updateSystem()
     {
         try {
+            $basePath = base_path();
+            $setting = Setting::first();
+            $repoUrl = "https://github.com/aangwie/we-cbt.git";
+            
+            if (!empty($setting->github_token)) {
+                // Gunakan Token untuk repo private / menghindari limit
+                $repoUrl = "https://oauth2:{$setting->github_token}@github.com/aangwie/we-cbt.git";
+            }
+            
             $output = [];
             $status = 0;
             
-            // Execute git pull and migrate
-            exec('git pull origin main 2>&1 && php artisan migrate --force 2>&1', $output, $status);
+            // Atasi masalah dubious ownership issue pada Git di cPanel/Shared Hosting
+            exec("git config --global --add safe.directory " . escapeshellarg($basePath) . " 2>&1");
+            
+            $cmdList = [
+                "cd " . escapeshellarg($basePath)
+            ];
+            
+            if (!is_dir($basePath . '/.git')) {
+                // Inisialisasi Git jika web di-deploy via zip (bukan clone)
+                $cmdList[] = "git init";
+                $cmdList[] = "git remote add origin " . escapeshellarg($repoUrl);
+            } else {
+                // Perbarui URL origin untuk memastikan token yang terbaru dipakai
+                $cmdList[] = "git remote set-url origin " . escapeshellarg($repoUrl);
+            }
+            
+            // Fetch, set branch ke main, reset hard agar sama persis origin, lalu migrate
+            $cmdList[] = "git fetch origin";
+            $cmdList[] = "git branch -M main";
+            $cmdList[] = "git reset --hard origin/main";
+            $cmdList[] = "php artisan migrate --force";
+            
+            // Jalankan rantai perintah
+            $fullCmd = implode(" 2>&1 && ", $cmdList) . " 2>&1";
+            exec($fullCmd, $output, $status);
             
             $log = implode("\n", $output);
-            $this->logSystemAction('Update CBT (GitHub Pull & Migrate)', $log);
+            
+            // Sembunyikan token pada log agar aman
+            if (!empty($setting->github_token)) {
+                $log = str_replace($setting->github_token, '***TOKEN_HIDDEN***', $log);
+            }
+            
+            $this->logSystemAction('Update CBT (GitHub Sync)', $log);
             
             if ($status !== 0) {
                 return back()->withErrors(['update' => 'Gagal menarik pembaruan: ' . $log]);
@@ -86,7 +124,7 @@ class AdminSettingController extends Controller
             // Clear caches after update
             \Illuminate\Support\Facades\Artisan::call('optimize:clear');
             
-            return back()->with('success', "Sistem berhasil diperbarui dari GitHub dan disinkronisasi.\nLog:\n" . substr($log, 0, 200) . '...');
+            return back()->with('success', "Sistem berhasil disinkronisasi dari GitHub dan dimigrasi.\nSilakan periksa log terminal untuk detail.");
         } catch (\Exception $e) {
             $this->logSystemAction('Update CBT (Error)', $e->getMessage());
             return back()->withErrors(['update' => 'Terjadi kesalahan sistem: ' . $e->getMessage()]);
@@ -159,5 +197,34 @@ class AdminSettingController extends Controller
         $timestamp = now()->format('Y-m-d H:i:s');
         $logEntry = "[$timestamp] ACTION: $action\n" . $output . "\n" . str_repeat("-", 50) . "\n";
         File::append($logPath, $logEntry);
+    }
+
+    // ─── SEB (Safe Exam Browser) Settings ───
+    public function sebIndex()
+    {
+        $setting = Setting::firstOrCreate(['id' => 1], [
+            'app_name' => 'WeTest CBT',
+        ]);
+
+        return view('admin.settings.seb', compact('setting'));
+    }
+
+    public function sebUpdate(Request $request)
+    {
+        $setting = Setting::firstOrCreate(['id' => 1]);
+
+        $validated = $request->validate([
+            'seb_enabled' => 'nullable|boolean',
+            'seb_key' => ['nullable', 'string', 'regex:/^[a-fA-F0-9]{64}$/'],
+        ], [
+            'seb_key.regex' => 'Browser Exam Key harus berupa hash SHA-256 (64 karakter hexadecimal).',
+        ]);
+
+        $setting->update([
+            'seb_enabled' => $request->boolean('seb_enabled'),
+            'seb_key' => $validated['seb_key'] ?: null,
+        ]);
+
+        return back()->with('success', 'Pengaturan SEB berhasil diperbarui.');
     }
 }

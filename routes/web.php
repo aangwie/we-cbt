@@ -94,6 +94,10 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'role:admin'])->grou
     Route::post('/settings/clear-cache', [\App\Http\Controllers\AdminSettingController::class, 'clearCache'])->name('settings.clear-cache');
     Route::post('/settings/clear-config', [\App\Http\Controllers\AdminSettingController::class, 'clearConfig'])->name('settings.clear-config');
     Route::post('/settings/link-storage', [\App\Http\Controllers\AdminSettingController::class, 'linkStorage'])->name('settings.link-storage');
+
+    // SEB (Safe Exam Browser) Settings
+    Route::get('/settings/seb', [\App\Http\Controllers\AdminSettingController::class, 'sebIndex'])->name('settings.seb');
+    Route::put('/settings/seb', [\App\Http\Controllers\AdminSettingController::class, 'sebUpdate'])->name('settings.seb.update');
 });
 
 // ─── Guru Routes ───
@@ -135,11 +139,15 @@ Route::prefix('guru')->name('guru.')->middleware(['auth', 'role:guru'])->group(f
 // ─── Siswa Routes ───
 Route::prefix('siswa')->name('siswa.')->middleware('siswa')->group(function () {
     Route::get('/dashboard', [SiswaController::class, 'dashboard'])->name('dashboard');
-    Route::get('/konfirmasi', [SiswaController::class, 'konfirmasi'])->name('konfirmasi');
-    Route::post('/validate-token', [SiswaController::class, 'validateToken'])->name('validate-token');
-    Route::get('/ujian/{ujian}/konfirmasi', [SiswaController::class, 'ujianKonfirmasi'])->name('ujian.konfirmasi');
-    Route::get('/ujian/{ujian}', [SiswaController::class, 'ujian'])->name('ujian');
-    Route::post('/ujian/{ujian}/submit', [SiswaController::class, 'submitUjian'])->name('ujian.submit');
-    Route::post('/ujian/{ujian}/save-answer', [SiswaController::class, 'saveAnswer'])->name('ujian.save-answer');
     Route::get('/hasil/{hasil}', [SiswaController::class, 'hasil'])->name('hasil');
+
+    // Exam routes — protected by SEB when enabled
+    Route::middleware('seb')->group(function () {
+        Route::get('/konfirmasi', [SiswaController::class, 'konfirmasi'])->name('konfirmasi');
+        Route::post('/validate-token', [SiswaController::class, 'validateToken'])->name('validate-token');
+        Route::get('/ujian/{ujian}/konfirmasi', [SiswaController::class, 'ujianKonfirmasi'])->name('ujian.konfirmasi');
+        Route::get('/ujian/{ujian}', [SiswaController::class, 'ujian'])->name('ujian');
+        Route::post('/ujian/{ujian}/submit', [SiswaController::class, 'submitUjian'])->name('ujian.submit');
+        Route::post('/ujian/{ujian}/save-answer', [SiswaController::class, 'saveAnswer'])->name('ujian.save-answer');
+    });
 });

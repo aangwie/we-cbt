@@ -10,5 +10,14 @@ class Setting extends Model
         'app_name',
         'app_logo',
         'github_token',
+        'seb_enabled',
+        'seb_key',
     ];
+
+    protected function casts(): array
+    {
+        return [
+            'seb_enabled' => 'boolean',
+        ];
+    }
 }
